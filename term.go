@@ -37,18 +37,25 @@ type Stopper struct {
 	log Logger
 }
 
-// NewWithDefaultSignals creates a new instance of application component stopper.
-// invokes withSignals with syscall.SIGINT and syscall.SIGTERM as default signals.
+// NewWithDefaultSignals creates a new instance of component stopper.
+// Invokes withSignals with syscall.SIGINT and syscall.SIGTERM as default signals.
+//
+// If the log parameter is nil, then noop logger will be used.
 //
 // Note: this method will start internal monitoring goroutine.
 func NewWithDefaultSignals(appCtx context.Context, log Logger) (*Stopper, context.Context) {
 	return NewWithSignals(appCtx, log, defaultSignals...)
 }
 
-// NewWithSignals creates a new instance of application component stopper.
+// NewWithSignals creates a new instance of component stopper.
+//
+// If the log parameter is nil, then noop logger will be used.
 //
 // Note: this method will start internal monitoring goroutine.
 func NewWithSignals(appCtx context.Context, log Logger, sig ...os.Signal) (*Stopper, context.Context) {
+	if log == nil {
+		log = noopLogger{}
+	}
 	chSignals := make(chan os.Signal, 1)
 	ctx, cancel := withSignals(appCtx, chSignals, sig...)
 	return &Stopper{
