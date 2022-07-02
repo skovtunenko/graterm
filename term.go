@@ -49,7 +49,8 @@ func NewWithDefaultSignals(appCtx context.Context, log Logger) (*Stopper, contex
 //
 // Note: this method will start internal monitoring goroutine.
 func NewWithSignals(appCtx context.Context, log Logger, sig ...os.Signal) (*Stopper, context.Context) {
-	ctx, cancel := withSignals(appCtx, sig...)
+	chSignals := make(chan os.Signal, 1)
+	ctx, cancel := withSignals(appCtx, chSignals, sig...)
 	return &Stopper{
 		termComponentsMx: &sync.Mutex{},
 		termComponents:   make(map[TerminationOrder][]terminationFunc),
@@ -64,10 +65,9 @@ func NewWithSignals(appCtx context.Context, log Logger, sig ...os.Signal) (*Stop
 // Otherwise, just the provided signals will.
 //
 // Note: this method will start internal monitoring goroutine.
-func withSignals(ctx context.Context, sig ...os.Signal) (context.Context, context.CancelFunc) {
+func withSignals(ctx context.Context, chSignals chan os.Signal, sig ...os.Signal) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
-	chSignals := make(chan os.Signal, 1)
 	signal.Notify(chSignals, sig...)
 
 	// function invoke cancel once a signal arrived OR parent context is done:

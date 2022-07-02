@@ -5,8 +5,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"log"
 	"os"
+	"os/signal"
 	"runtime"
 	"sync"
+	"syscall"
 	"testing"
 	"time"
 )
@@ -233,6 +235,47 @@ func TestStopper_Wait(t *testing.T) {
 			} else {
 				require.NoError(t, waitErr)
 			}
+		})
+	}
+}
+
+func Test_withSignals(t *testing.T) {
+	type args struct {
+		ctx       context.Context
+		chSignals chan os.Signal
+		sig       syscall.Signal
+	}
+	tests := []struct {
+		name     string
+		argsFunc func(t *testing.T) args
+		wantCtx  context.Context
+	}{
+		{
+			name: "termination on syscall",
+			argsFunc: func(t *testing.T) args {
+				t.Helper()
+				return args{
+					ctx:       context.Background(),
+					chSignals: make(chan os.Signal, 1),
+					sig:       syscall.SIGHUP,
+				}
+			},
+			wantCtx: nil,
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			args := tt.argsFunc(t)
+			defer signal.Stop(args.chSignals)
+
+			gotCtx, gotCancelFunc := withSignals(args.ctx, args.chSignals, args.sig)
+			err := syscall.Kill(syscall.Getpid(), args.sig)
+			require.NoError(t, err)
+
+			require.NotNil(t, gotCtx)
+			require.NotNil(t, gotCancelFunc)
+			require.NoError(t, gotCtx.Err())
 		})
 	}
 }
