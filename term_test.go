@@ -94,7 +94,7 @@ func TestStopper_AddShutdownHook(t *testing.T) {
 	})
 }
 
-func TestStopper_WaitShutdown(t *testing.T) {
+func TestStopper_waitShutdown(t *testing.T) {
 	t.Run("execution_waits_for_the_context_to_be_done_before_proceeding", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
