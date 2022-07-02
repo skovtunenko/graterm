@@ -3,7 +3,6 @@ package graterm
 import (
 	"context"
 	"github.com/stretchr/testify/require"
-	"log"
 	"os"
 	"os/signal"
 	"runtime"
@@ -17,7 +16,7 @@ func TestNewWithDefaultSignals(t *testing.T) {
 	rootCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	got, ctx := NewWithDefaultSignals(rootCtx, log.Default())
+	got, ctx := NewWithDefaultSignals(rootCtx)
 	require.NotNil(t, got)
 	require.NotNil(t, ctx)
 
@@ -35,7 +34,7 @@ func TestStopper_Register(t *testing.T) {
 		rootCtx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		s, ctx := NewWithDefaultSignals(rootCtx, log.Default())
+		s, ctx := NewWithDefaultSignals(rootCtx)
 		require.NotNil(t, ctx)
 
 		s.Register(TerminationOrder(1), "Hook", 1*time.Second, func(_ context.Context) {})
@@ -50,7 +49,7 @@ func TestStopper_Register(t *testing.T) {
 		rootCtx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		s, ctx := NewWithDefaultSignals(rootCtx, log.Default())
+		s, ctx := NewWithDefaultSignals(rootCtx)
 		require.NotNil(t, ctx)
 
 		s.Register(TerminationOrder(1), "Hook1", time.Second, func(_ context.Context) {})
@@ -70,7 +69,7 @@ func TestStopper_Register(t *testing.T) {
 		rootCtx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		s, ctx := NewWithDefaultSignals(rootCtx, log.Default())
+		s, ctx := NewWithDefaultSignals(rootCtx)
 		require.NotNil(t, ctx)
 
 		s.Register(TerminationOrder(1), "Hook1", time.Second, func(_ context.Context) {})
@@ -88,7 +87,7 @@ func TestStopper_waitShutdown(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		s, ctx := NewWithDefaultSignals(ctx, log.Default())
+		s, ctx := NewWithDefaultSignals(ctx)
 		require.NotNil(t, ctx)
 
 		i := 0
@@ -109,7 +108,7 @@ func TestStopper_waitShutdown(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		s, ctx := NewWithDefaultSignals(ctx, log.Default())
+		s, ctx := NewWithDefaultSignals(ctx)
 		require.NotNil(t, ctx)
 
 		res := make([]int, 0, 4)
@@ -131,7 +130,7 @@ func TestStopper_waitShutdown(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		s, ctx := NewWithDefaultSignals(ctx, log.Default())
+		s, ctx := NewWithDefaultSignals(ctx)
 		require.NotNil(t, ctx)
 
 		t1Mx := sync.Mutex{}
@@ -192,7 +191,7 @@ func TestStopper_Wait(t *testing.T) {
 			rootCtx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 
-			s, ctx := NewWithDefaultSignals(rootCtx, log.Default())
+			s, ctx := NewWithDefaultSignals(rootCtx)
 			require.NotNil(t, ctx)
 
 			s.wg.Add(1)
@@ -244,50 +243,4 @@ func Test_withSignals(t *testing.T) {
 
 		require.NoError(t, gotCtx.Err())
 	})
-}
-
-func TestNewWithSignals(t *testing.T) {
-	type args struct {
-		log Logger
-	}
-	tests := []struct {
-		name string
-		args args
-	}{
-		{
-			name: "default_logger",
-			args: args{
-				log: log.Default(),
-			},
-		},
-		{
-			name: "private_noop_logger",
-			args: args{
-				log: log.Default(),
-			},
-		},
-		{
-			name: "nil_logger",
-			args: args{
-				log: nil,
-			},
-		},
-	}
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			rootCtx, cancel := context.WithCancel(context.Background())
-			defer cancel()
-
-			got, ctx := NewWithSignals(rootCtx, tt.args.log, os.Interrupt)
-			require.NotNil(t, got)
-			require.NotNil(t, ctx)
-
-			require.NotNil(t, got.hooksMx)
-			require.NotNil(t, got.hooks)
-			require.NotNil(t, got.wg)
-			require.NotNil(t, got.cancelFunc)
-			require.NotNil(t, got.log)
-		})
-	}
 }

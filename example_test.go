@@ -8,7 +8,7 @@ import (
 )
 
 func ExampleStopper_Wait() {
-	stopper, appCtx := graterm.NewWithDefaultSignals(context.Background(), log.Default())
+	stopper, appCtx := graterm.NewWithDefaultSignals(context.Background())
 
 	// register hooks...
 
@@ -20,7 +20,7 @@ func ExampleStopper_Wait() {
 }
 
 func ExampleStopper_Register() {
-	stopper, appCtx := graterm.NewWithDefaultSignals(context.Background(), log.Default())
+	stopper, appCtx := graterm.NewWithDefaultSignals(context.Background())
 	// Register some hooks:
 	{
 		stopper.Register(1, "HOOK#1", 1*time.Second, func(ctx context.Context) {

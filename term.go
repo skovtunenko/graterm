@@ -40,22 +40,15 @@ type Stopper struct {
 // NewWithDefaultSignals creates a new instance of component Stopper.
 // Invokes withSignals with syscall.SIGINT and syscall.SIGTERM as default signals.
 //
-// If the log parameter is nil, then noop logger will be used.
-//
 // Note: this method will start internal monitoring goroutine.
-func NewWithDefaultSignals(appCtx context.Context, log Logger) (*Stopper, context.Context) {
-	return NewWithSignals(appCtx, log, defaultSignals...)
+func NewWithDefaultSignals(appCtx context.Context) (*Stopper, context.Context) {
+	return NewWithSignals(appCtx, defaultSignals...)
 }
 
 // NewWithSignals creates a new instance of component Stopper.
 //
-// If the log parameter is nil, then noop logger will be used.
-//
 // Note: this method will start internal monitoring goroutine.
-func NewWithSignals(appCtx context.Context, log Logger, sig ...os.Signal) (*Stopper, context.Context) {
-	if log == nil {
-		log = noopLogger{}
-	}
+func NewWithSignals(appCtx context.Context, sig ...os.Signal) (*Stopper, context.Context) {
 	chSignals := make(chan os.Signal, 1)
 	ctx, cancel := withSignals(appCtx, chSignals, sig...)
 	return &Stopper{
@@ -63,7 +56,7 @@ func NewWithSignals(appCtx context.Context, log Logger, sig ...os.Signal) (*Stop
 		hooks:      make(map[TerminationOrder][]terminationFunc),
 		wg:         &sync.WaitGroup{},
 		cancelFunc: cancel,
-		log:        log,
+		log:        noopLogger{},
 	}, ctx
 }
 
@@ -91,8 +84,12 @@ func withSignals(ctx context.Context, chSignals chan os.Signal, sig ...os.Signal
 }
 
 // SetLogger sets the logger implementation.
+//
 // If log is nil, then NOOP logger will be used.
 func (s *Stopper) SetLogger(log Logger) {
+	s.hooksMx.Lock()
+	defer s.hooksMx.Unlock()
+
 	if log == nil {
 		log = noopLogger{}
 	}
