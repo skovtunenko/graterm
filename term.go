@@ -87,12 +87,12 @@ func withSignals(ctx context.Context, chSignals chan os.Signal, sig ...os.Signal
 //
 // If log is nil, then NOOP logger will be used.
 func (s *Stopper) SetLogger(log Logger) {
-	s.hooksMx.Lock()
-	defer s.hooksMx.Unlock()
-
 	if log == nil {
 		log = noopLogger{}
 	}
+
+	s.hooksMx.Lock()
+	defer s.hooksMx.Unlock()
 	s.log = log
 }
 
