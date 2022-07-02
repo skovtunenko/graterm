@@ -37,7 +37,7 @@ type Stopper struct {
 	log Logger
 }
 
-// NewWithDefaultSignals creates a new instance of component stopper.
+// NewWithDefaultSignals creates a new instance of component Stopper.
 // Invokes withSignals with syscall.SIGINT and syscall.SIGTERM as default signals.
 //
 // If the log parameter is nil, then noop logger will be used.
@@ -47,7 +47,7 @@ func NewWithDefaultSignals(appCtx context.Context, log Logger) (*Stopper, contex
 	return NewWithSignals(appCtx, log, defaultSignals...)
 }
 
-// NewWithSignals creates a new instance of component stopper.
+// NewWithSignals creates a new instance of component Stopper.
 //
 // If the log parameter is nil, then noop logger will be used.
 //
@@ -67,7 +67,7 @@ func NewWithSignals(appCtx context.Context, log Logger, sig ...os.Signal) (*Stop
 	}, ctx
 }
 
-// withSignals return a copy of the parent context that will be canceled by signal.
+// withSignals return a copy of the parent context that will be canceled by signal(s).
 // If no signals are provided, any incoming signal will cause cancel.
 // Otherwise, just the provided signals will.
 //
@@ -99,9 +99,9 @@ func (s *Stopper) Register(order TerminationOrder, componentName string, timeout
 		timeout:       timeout,
 		hookFunc:      hookFunc,
 	}
+
 	s.hooksMx.Lock()
 	defer s.hooksMx.Unlock()
-
 	s.hooks[order] = append(s.hooks[order], comm)
 }
 
@@ -126,14 +126,14 @@ func (s *Stopper) Wait(appCtx context.Context, timeout time.Duration) error {
 
 // waitWG returns a chan that will be closed once given wg is done.
 func waitWG(wg *sync.WaitGroup) <-chan struct{} {
-	c := make(chan struct{})
+	ch := make(chan struct{})
 
 	go func() {
-		defer close(c)
+		defer close(ch)
 		wg.Wait()
 	}()
 
-	return c
+	return ch
 }
 
 // waitShutdown waits for the context to be done and then sequentially notifies existing shutdown hooks.
