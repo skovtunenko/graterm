@@ -29,6 +29,8 @@ func TestNewWithDefaultSignals(t *testing.T) {
 }
 
 func TestStopper_AddShutdownHook(t *testing.T) {
+	t.Parallel()
+
 	t.Run("add_only_one_hook", func(t *testing.T) {
 		rootCtx, cancel := context.WithCancel(context.Background())
 		defer cancel()
