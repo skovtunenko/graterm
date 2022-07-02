@@ -105,15 +105,14 @@ func (s *Stopper) Register(order TerminationOrder, componentName string, timeout
 	s.hooks[order] = append(s.hooks[order], comm)
 }
 
-// Wait waits (with timeout) for Stopper to finish termination after the ctx is done.
-func (s *Stopper) Wait(ctx context.Context, timeout time.Duration) error {
+// Wait waits (with timeout) for Stopper to finish termination after the appCtx is done.
+func (s *Stopper) Wait(appCtx context.Context, timeout time.Duration) error {
 	{
 		s.wg.Add(1)
-		go s.waitShutdown(ctx)
+		go s.waitShutdown(appCtx)
 	}
 
-	// block till the end of the app:
-	<-ctx.Done()
+	<-appCtx.Done()
 
 	wgChan := waitWG(s.wg)
 
