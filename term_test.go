@@ -28,21 +28,6 @@ func TestNewWithDefaultSignals(t *testing.T) {
 	require.NotNil(t, got.log)
 }
 
-func TestNewWithSignals(t *testing.T) {
-	rootCtx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	got, ctx := NewWithSignals(rootCtx, log.Default(), os.Interrupt)
-	require.NotNil(t, got)
-	require.NotNil(t, ctx)
-
-	require.NotNil(t, got.termComponentsMx)
-	require.NotNil(t, got.termComponents)
-	require.NotNil(t, got.wg)
-	require.NotNil(t, got.cancelFunc)
-	require.NotNil(t, got.log)
-}
-
 func TestStopper_AddShutdownHook(t *testing.T) {
 	t.Run("add_only_one_hook", func(t *testing.T) {
 		rootCtx, cancel := context.WithCancel(context.Background())
@@ -276,6 +261,52 @@ func Test_withSignals(t *testing.T) {
 			require.NotNil(t, gotCtx)
 			require.NotNil(t, gotCancelFunc)
 			require.NoError(t, gotCtx.Err())
+		})
+	}
+}
+
+func TestNewWithSignals(t *testing.T) {
+	type args struct {
+		log Logger
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+		{
+			name: "default_logger",
+			args: args{
+				log: log.Default(),
+			},
+		},
+		{
+			name: "private_noop_logger",
+			args: args{
+				log: log.Default(),
+			},
+		},
+		{
+			name: "nil_logger",
+			args: args{
+				log: nil,
+			},
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			rootCtx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			got, ctx := NewWithSignals(rootCtx, tt.args.log, os.Interrupt)
+			require.NotNil(t, got)
+			require.NotNil(t, ctx)
+
+			require.NotNil(t, got.termComponentsMx)
+			require.NotNil(t, got.termComponents)
+			require.NotNil(t, got.wg)
+			require.NotNil(t, got.cancelFunc)
+			require.NotNil(t, got.log)
 		})
 	}
 }
