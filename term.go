@@ -124,7 +124,7 @@ func (s *Stopper) Wait(appCtx context.Context, timeout time.Duration) error {
 	}
 }
 
-// waitWG returns a chan that will be closed once wg is done.
+// waitWG returns a chan that will be closed once given wg is done.
 func waitWG(wg *sync.WaitGroup) <-chan struct{} {
 	c := make(chan struct{})
 
