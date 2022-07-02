@@ -83,6 +83,21 @@ func withSignals(ctx context.Context, sig ...os.Signal) (context.Context, contex
 	return ctx, cancel
 }
 
+// AddShutdownHook add ShutdownHook to the execution-on-shutdown queue.
+// The lower the order the higher the execution priority, the earlier it will be executed.
+// If there are multiple commands with the same order they will be executed in parallel.
+func (s *Stopper) AddShutdownHook(order TerminationOrder, componentName string, timeout time.Duration, hookFunc func(ctx context.Context)) {
+	comm := terminationFunc{
+		componentName: componentName,
+		timeout:       timeout,
+		hookFunc:      hookFunc,
+	}
+	s.termComponentsMx.Lock()
+	defer s.termComponentsMx.Unlock()
+
+	s.termComponents[order] = append(s.termComponents[order], comm)
+}
+
 // Wait waits (with timeout) for Stopper to finish termination after the ctx is done.
 func (s *Stopper) Wait(ctx context.Context, timeout time.Duration) error {
 	{
