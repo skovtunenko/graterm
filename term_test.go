@@ -28,7 +28,7 @@ func TestNewWithDefaultSignals(t *testing.T) {
 	require.NotNil(t, got.log)
 }
 
-func TestStopper_AddShutdownHook(t *testing.T) {
+func TestStopper_Register(t *testing.T) {
 	t.Parallel()
 
 	t.Run("add_only_one_hook", func(t *testing.T) {

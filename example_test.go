@@ -19,7 +19,7 @@ func ExampleStopper_Wait() {
 	}
 }
 
-func ExampleStopper_AddShutdownHook() {
+func ExampleStopper_Register() {
 	stopper, appCtx := graterm.NewWithDefaultSignals(context.Background(), log.Default())
 	// Register some hooks:
 	{
