@@ -31,6 +31,20 @@ type Stopper struct {
 	log Logger
 }
 
+// NewWithSignals creates a new instance of application component stopper.
+//
+// Note: this method will start internal monitoring goroutine.
+func NewWithSignals(appCtx context.Context, log Logger, sig ...os.Signal) (*Stopper, context.Context) {
+	ctx, cancel := withSignals(appCtx, sig...)
+	return &Stopper{
+		termComponentsMx: &sync.Mutex{},
+		termComponents:   make(map[TerminationOrder][]terminationFunc),
+		wg:               &sync.WaitGroup{},
+		cancelFunc:       cancel,
+		log:              log,
+	}, ctx
+}
+
 // withSignals return a copy of the parent context that will be canceled by signal.
 // If no signals are provided, any incoming signal will cause cancel.
 // Otherwise, just the provided signals will.
