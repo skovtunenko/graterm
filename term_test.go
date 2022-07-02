@@ -225,21 +225,23 @@ func TestStopper_Wait(t *testing.T) {
 }
 
 func Test_withSignals(t *testing.T) {
-	rootCtx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	t.Run("termination_on_SIGHUP", func(t *testing.T) {
+		rootCtx, cancel := context.WithCancel(context.Background())
+		defer cancel()
 
-	chSignals := make(chan os.Signal, 1)
-	sig := syscall.SIGHUP
-	defer signal.Stop(chSignals)
+		chSignals := make(chan os.Signal, 1)
+		sig := syscall.SIGHUP
+		defer signal.Stop(chSignals)
 
-	gotCtx, gotCancelFunc := withSignals(rootCtx, chSignals, sig)
-	err := syscall.Kill(syscall.Getpid(), sig)
-	require.NoError(t, err)
+		gotCtx, gotCancelFunc := withSignals(rootCtx, chSignals, sig)
+		err := syscall.Kill(syscall.Getpid(), sig)
+		require.NoError(t, err)
 
-	require.NotNil(t, gotCtx)
-	require.NotNil(t, gotCancelFunc)
+		require.NotNil(t, gotCtx)
+		require.NotNil(t, gotCancelFunc)
 
-	require.NoError(t, gotCtx.Err())
+		require.NoError(t, gotCtx.Err())
+	})
 }
 
 func TestNewWithSignals(t *testing.T) {
