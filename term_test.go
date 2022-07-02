@@ -3,6 +3,7 @@ package graterm
 import (
 	"context"
 	"github.com/stretchr/testify/require"
+	"log"
 	"os"
 	"os/signal"
 	"runtime"
@@ -243,4 +244,51 @@ func Test_withSignals(t *testing.T) {
 
 		require.NoError(t, gotCtx.Err())
 	})
+}
+
+func TestStopper_SetLogger(t *testing.T) {
+	type args struct {
+		log Logger
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantLog Logger
+	}{
+		{
+			name: "default_logger",
+			args: args{
+				log: log.Default(),
+			},
+			wantLog: log.Default(),
+		},
+		{
+			name: "private_noop_logger",
+			args: args{
+				log: log.Default(),
+			},
+			wantLog: log.Default(),
+		},
+		{
+			name: "nil_logger",
+			args: args{
+				log: nil,
+			},
+			wantLog: noopLogger{},
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			rootCtx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			got, ctx := NewWithSignals(rootCtx, os.Interrupt)
+			require.NotNil(t, got)
+			require.NotNil(t, ctx)
+
+			got.SetLogger(tt.args.log)
+			require.Equal(t, tt.wantLog, got.log)
+		})
+	}
 }
