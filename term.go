@@ -25,10 +25,10 @@ type terminationFunc struct {
 	hookFunc      func(ctx context.Context)
 }
 
-// Stopper is a service stopper that executes shutdown hooks sequentially in a specified order.
+// Stopper is a component stopper that executes registered termination hooks in a specified order.
 type Stopper struct {
-	termComponentsMx *sync.Mutex
-	termComponents   map[TerminationOrder][]terminationFunc
+	hooksMx *sync.Mutex
+	hooks   map[TerminationOrder][]terminationFunc
 
 	wg *sync.WaitGroup
 
@@ -59,11 +59,11 @@ func NewWithSignals(appCtx context.Context, log Logger, sig ...os.Signal) (*Stop
 	chSignals := make(chan os.Signal, 1)
 	ctx, cancel := withSignals(appCtx, chSignals, sig...)
 	return &Stopper{
-		termComponentsMx: &sync.Mutex{},
-		termComponents:   make(map[TerminationOrder][]terminationFunc),
-		wg:               &sync.WaitGroup{},
-		cancelFunc:       cancel,
-		log:              log,
+		hooksMx:    &sync.Mutex{},
+		hooks:      make(map[TerminationOrder][]terminationFunc),
+		wg:         &sync.WaitGroup{},
+		cancelFunc: cancel,
+		log:        log,
 	}, ctx
 }
 
@@ -90,19 +90,19 @@ func withSignals(ctx context.Context, chSignals chan os.Signal, sig ...os.Signal
 	return ctx, cancel
 }
 
-// AddShutdownHook add ShutdownHook to the execution-on-shutdown queue.
+// Register registers termination hook with priority and human-readable name.
 // The lower the order the higher the execution priority, the earlier it will be executed.
-// If there are multiple commands with the same order they will be executed in parallel.
-func (s *Stopper) AddShutdownHook(order TerminationOrder, componentName string, timeout time.Duration, hookFunc func(ctx context.Context)) {
+// If there are multiple hooks with the same order they will be executed in parallel.
+func (s *Stopper) Register(order TerminationOrder, componentName string, timeout time.Duration, hookFunc func(ctx context.Context)) {
 	comm := terminationFunc{
 		componentName: componentName,
 		timeout:       timeout,
 		hookFunc:      hookFunc,
 	}
-	s.termComponentsMx.Lock()
-	defer s.termComponentsMx.Unlock()
+	s.hooksMx.Lock()
+	defer s.hooksMx.Unlock()
 
-	s.termComponents[order] = append(s.termComponents[order], comm)
+	s.hooks[order] = append(s.hooks[order], comm)
 }
 
 // Wait waits (with timeout) for Stopper to finish termination after the ctx is done.
@@ -143,11 +143,11 @@ func (s *Stopper) waitShutdown(appCtx context.Context) {
 
 	<-appCtx.Done() // Block until application context is done
 
-	s.termComponentsMx.Lock()
-	defer s.termComponentsMx.Unlock()
+	s.hooksMx.Lock()
+	defer s.hooksMx.Unlock()
 
-	order := make([]int, 0, len(s.termComponents))
-	for k := range s.termComponents {
+	order := make([]int, 0, len(s.hooks))
+	for k := range s.hooks {
 		order = append(order, int(k))
 	}
 	sort.Ints(order)
@@ -155,7 +155,7 @@ func (s *Stopper) waitShutdown(appCtx context.Context) {
 	for _, o := range order {
 		runWg := sync.WaitGroup{}
 
-		for _, c := range s.termComponents[TerminationOrder(o)] {
+		for _, c := range s.hooks[TerminationOrder(o)] {
 			runWg.Add(1)
 
 			go func(f terminationFunc) {
