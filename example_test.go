@@ -8,7 +8,7 @@ import (
 )
 
 func ExampleStopper_Wait() {
-	stopper, appCtx := graterm.NewWithDefaultSignals(context.Background(), log.Default())
+	stopper, appCtx := graterm.NewWithDefaultSignals(context.Background())
 
 	// register hooks...
 
@@ -19,21 +19,21 @@ func ExampleStopper_Wait() {
 	}
 }
 
-func ExampleStopper_AddShutdownHook() {
-	stopper, appCtx := graterm.NewWithDefaultSignals(context.Background(), log.Default())
+func ExampleStopper_Register() {
+	stopper, appCtx := graterm.NewWithDefaultSignals(context.Background())
 	// Register some hooks:
 	{
-		stopper.AddShutdownHook(1, "HOOK#1", 1*time.Second, func(ctx context.Context) {
+		stopper.Register(1, "HOOK#1", 1*time.Second, func(ctx context.Context) {
 			log.Println("terminating HOOK#1...")
 			defer log.Println("...HOOK#1 terminated")
 		})
 
-		stopper.AddShutdownHook(1, "HOOK#2", 1*time.Second, func(ctx context.Context) {
+		stopper.Register(1, "HOOK#2", 1*time.Second, func(ctx context.Context) {
 			log.Println("terminating HOOK#2...")
 			defer log.Println("...HOOK#2 terminated")
 		})
 
-		stopper.AddShutdownHook(2, "HOOK#3", 1*time.Second, func(ctx context.Context) {
+		stopper.Register(2, "HOOK#3", 1*time.Second, func(ctx context.Context) {
 			log.Println("terminating HOOK#3...")
 			defer log.Println("...HOOK#3 terminated")
 

@@ -25,10 +25,10 @@ type terminationFunc struct {
 	hookFunc      func(ctx context.Context)
 }
 
-// Stopper is a service stopper that executes shutdown hooks sequentially in a specified order.
+// Stopper is a component stopper that executes registered termination hooks in a specified order.
 type Stopper struct {
-	termComponentsMx *sync.Mutex
-	termComponents   map[TerminationOrder][]terminationFunc
+	hooksMx *sync.Mutex
+	hooks   map[TerminationOrder][]terminationFunc
 
 	wg *sync.WaitGroup
 
@@ -37,37 +37,30 @@ type Stopper struct {
 	log Logger
 }
 
-// NewWithDefaultSignals creates a new instance of component stopper.
+// NewWithDefaultSignals creates a new instance of component Stopper.
 // Invokes withSignals with syscall.SIGINT and syscall.SIGTERM as default signals.
 //
-// If the log parameter is nil, then noop logger will be used.
-//
 // Note: this method will start internal monitoring goroutine.
-func NewWithDefaultSignals(appCtx context.Context, log Logger) (*Stopper, context.Context) {
-	return NewWithSignals(appCtx, log, defaultSignals...)
+func NewWithDefaultSignals(appCtx context.Context) (*Stopper, context.Context) {
+	return NewWithSignals(appCtx, defaultSignals...)
 }
 
-// NewWithSignals creates a new instance of component stopper.
-//
-// If the log parameter is nil, then noop logger will be used.
+// NewWithSignals creates a new instance of component Stopper.
 //
 // Note: this method will start internal monitoring goroutine.
-func NewWithSignals(appCtx context.Context, log Logger, sig ...os.Signal) (*Stopper, context.Context) {
-	if log == nil {
-		log = noopLogger{}
-	}
+func NewWithSignals(appCtx context.Context, sig ...os.Signal) (*Stopper, context.Context) {
 	chSignals := make(chan os.Signal, 1)
 	ctx, cancel := withSignals(appCtx, chSignals, sig...)
 	return &Stopper{
-		termComponentsMx: &sync.Mutex{},
-		termComponents:   make(map[TerminationOrder][]terminationFunc),
-		wg:               &sync.WaitGroup{},
-		cancelFunc:       cancel,
-		log:              log,
+		hooksMx:    &sync.Mutex{},
+		hooks:      make(map[TerminationOrder][]terminationFunc),
+		wg:         &sync.WaitGroup{},
+		cancelFunc: cancel,
+		log:        noopLogger{},
 	}, ctx
 }
 
-// withSignals return a copy of the parent context that will be canceled by signal.
+// withSignals return a copy of the parent context that will be canceled by signal(s).
 // If no signals are provided, any incoming signal will cause cancel.
 // Otherwise, just the provided signals will.
 //
@@ -90,30 +83,42 @@ func withSignals(ctx context.Context, chSignals chan os.Signal, sig ...os.Signal
 	return ctx, cancel
 }
 
-// AddShutdownHook add ShutdownHook to the execution-on-shutdown queue.
+// SetLogger sets the logger implementation.
+//
+// If log is nil, then NOOP logger will be used.
+func (s *Stopper) SetLogger(log Logger) {
+	if log == nil {
+		log = noopLogger{}
+	}
+
+	s.hooksMx.Lock()
+	defer s.hooksMx.Unlock()
+	s.log = log
+}
+
+// Register registers termination hook with priority and human-readable name.
 // The lower the order the higher the execution priority, the earlier it will be executed.
-// If there are multiple commands with the same order they will be executed in parallel.
-func (s *Stopper) AddShutdownHook(order TerminationOrder, componentName string, timeout time.Duration, hookFunc func(ctx context.Context)) {
+// If there are multiple hooks with the same order they will be executed in parallel.
+func (s *Stopper) Register(order TerminationOrder, componentName string, timeout time.Duration, hookFunc func(ctx context.Context)) {
 	comm := terminationFunc{
 		componentName: componentName,
 		timeout:       timeout,
 		hookFunc:      hookFunc,
 	}
-	s.termComponentsMx.Lock()
-	defer s.termComponentsMx.Unlock()
 
-	s.termComponents[order] = append(s.termComponents[order], comm)
+	s.hooksMx.Lock()
+	defer s.hooksMx.Unlock()
+	s.hooks[order] = append(s.hooks[order], comm)
 }
 
-// Wait waits (with timeout) for Stopper to finish termination after the ctx is done.
-func (s *Stopper) Wait(ctx context.Context, timeout time.Duration) error {
+// Wait waits (with timeout) for Stopper to finish termination after the appCtx is done.
+func (s *Stopper) Wait(appCtx context.Context, timeout time.Duration) error {
 	{
 		s.wg.Add(1)
-		go s.waitShutdown(ctx)
+		go s.waitShutdown(appCtx)
 	}
 
-	// block till the end of the app:
-	<-ctx.Done()
+	<-appCtx.Done()
 
 	wgChan := waitWG(s.wg)
 
@@ -125,16 +130,16 @@ func (s *Stopper) Wait(ctx context.Context, timeout time.Duration) error {
 	}
 }
 
-// waitWG returns a chan that will be closed once wg is done.
+// waitWG returns a chan that will be closed once given wg is done.
 func waitWG(wg *sync.WaitGroup) <-chan struct{} {
-	c := make(chan struct{})
+	ch := make(chan struct{})
 
 	go func() {
-		defer close(c)
+		defer close(ch)
 		wg.Wait()
 	}()
 
-	return c
+	return ch
 }
 
 // waitShutdown waits for the context to be done and then sequentially notifies existing shutdown hooks.
@@ -143,11 +148,11 @@ func (s *Stopper) waitShutdown(appCtx context.Context) {
 
 	<-appCtx.Done() // Block until application context is done
 
-	s.termComponentsMx.Lock()
-	defer s.termComponentsMx.Unlock()
+	s.hooksMx.Lock()
+	defer s.hooksMx.Unlock()
 
-	order := make([]int, 0, len(s.termComponents))
-	for k := range s.termComponents {
+	order := make([]int, 0, len(s.hooks))
+	for k := range s.hooks {
 		order = append(order, int(k))
 	}
 	sort.Ints(order)
@@ -155,7 +160,7 @@ func (s *Stopper) waitShutdown(appCtx context.Context) {
 	for _, o := range order {
 		runWg := sync.WaitGroup{}
 
-		for _, c := range s.termComponents[TerminationOrder(o)] {
+		for _, c := range s.hooks[TerminationOrder(o)] {
 			runWg.Add(1)
 
 			go func(f terminationFunc) {

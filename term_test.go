@@ -17,31 +17,31 @@ func TestNewWithDefaultSignals(t *testing.T) {
 	rootCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	got, ctx := NewWithDefaultSignals(rootCtx, log.Default())
+	got, ctx := NewWithDefaultSignals(rootCtx)
 	require.NotNil(t, got)
 	require.NotNil(t, ctx)
 
-	require.NotNil(t, got.termComponentsMx)
-	require.NotNil(t, got.termComponents)
+	require.NotNil(t, got.hooksMx)
+	require.NotNil(t, got.hooks)
 	require.NotNil(t, got.wg)
 	require.NotNil(t, got.cancelFunc)
 	require.NotNil(t, got.log)
 }
 
-func TestStopper_AddShutdownHook(t *testing.T) {
+func TestStopper_Register(t *testing.T) {
 	t.Parallel()
 
 	t.Run("add_only_one_hook", func(t *testing.T) {
 		rootCtx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		s, ctx := NewWithDefaultSignals(rootCtx, log.Default())
+		s, ctx := NewWithDefaultSignals(rootCtx)
 		require.NotNil(t, ctx)
 
-		s.AddShutdownHook(TerminationOrder(1), "Hook", 1*time.Second, func(_ context.Context) {})
+		s.Register(TerminationOrder(1), "Hook", 1*time.Second, func(_ context.Context) {})
 
-		require.Equal(t, 1, len(s.termComponents))
-		got, ok := s.termComponents[TerminationOrder(1)]
+		require.Equal(t, 1, len(s.hooks))
+		got, ok := s.hooks[TerminationOrder(1)]
 		require.True(t, ok)
 		require.Equal(t, 1, len(got))
 	})
@@ -50,18 +50,18 @@ func TestStopper_AddShutdownHook(t *testing.T) {
 		rootCtx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		s, ctx := NewWithDefaultSignals(rootCtx, log.Default())
+		s, ctx := NewWithDefaultSignals(rootCtx)
 		require.NotNil(t, ctx)
 
-		s.AddShutdownHook(TerminationOrder(1), "Hook1", time.Second, func(_ context.Context) {})
-		s.AddShutdownHook(TerminationOrder(2), "Hook2", time.Second, func(_ context.Context) {})
+		s.Register(TerminationOrder(1), "Hook1", time.Second, func(_ context.Context) {})
+		s.Register(TerminationOrder(2), "Hook2", time.Second, func(_ context.Context) {})
 
-		require.Equal(t, 2, len(s.termComponents))
-		got, ok := s.termComponents[TerminationOrder(1)]
+		require.Equal(t, 2, len(s.hooks))
+		got, ok := s.hooks[TerminationOrder(1)]
 		require.True(t, ok)
 		require.Equal(t, 1, len(got))
 
-		got2, ok2 := s.termComponents[TerminationOrder(2)]
+		got2, ok2 := s.hooks[TerminationOrder(2)]
 		require.True(t, ok2)
 		require.Equal(t, 1, len(got2))
 	})
@@ -70,14 +70,14 @@ func TestStopper_AddShutdownHook(t *testing.T) {
 		rootCtx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		s, ctx := NewWithDefaultSignals(rootCtx, log.Default())
+		s, ctx := NewWithDefaultSignals(rootCtx)
 		require.NotNil(t, ctx)
 
-		s.AddShutdownHook(TerminationOrder(1), "Hook1", time.Second, func(_ context.Context) {})
-		s.AddShutdownHook(TerminationOrder(1), "Hook2", time.Second, func(_ context.Context) {})
+		s.Register(TerminationOrder(1), "Hook1", time.Second, func(_ context.Context) {})
+		s.Register(TerminationOrder(1), "Hook2", time.Second, func(_ context.Context) {})
 
-		require.Equal(t, 1, len(s.termComponents))
-		got, ok := s.termComponents[TerminationOrder(1)]
+		require.Equal(t, 1, len(s.hooks))
+		got, ok := s.hooks[TerminationOrder(1)]
 		require.True(t, ok)
 		require.Equal(t, 2, len(got))
 	})
@@ -88,11 +88,11 @@ func TestStopper_waitShutdown(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		s, ctx := NewWithDefaultSignals(ctx, log.Default())
+		s, ctx := NewWithDefaultSignals(ctx)
 		require.NotNil(t, ctx)
 
 		i := 0
-		s.AddShutdownHook(TerminationOrder(1), "Hook", time.Second, func(_ context.Context) { i = 1 })
+		s.Register(TerminationOrder(1), "Hook", time.Second, func(_ context.Context) { i = 1 })
 
 		s.wg.Add(1)
 		go s.waitShutdown(ctx)
@@ -109,14 +109,14 @@ func TestStopper_waitShutdown(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		s, ctx := NewWithDefaultSignals(ctx, log.Default())
+		s, ctx := NewWithDefaultSignals(ctx)
 		require.NotNil(t, ctx)
 
 		res := make([]int, 0, 4)
-		s.AddShutdownHook(TerminationOrder(2), "Hook1", time.Second, func(_ context.Context) { res = append(res, 2) })
-		s.AddShutdownHook(TerminationOrder(4), "Hook2", time.Second, func(_ context.Context) { res = append(res, 4) })
-		s.AddShutdownHook(TerminationOrder(1), "Hook3", time.Second, func(_ context.Context) { res = append(res, 1) })
-		s.AddShutdownHook(TerminationOrder(3), "Hook4", time.Second, func(_ context.Context) { res = append(res, 3) })
+		s.Register(TerminationOrder(2), "Hook1", time.Second, func(_ context.Context) { res = append(res, 2) })
+		s.Register(TerminationOrder(4), "Hook2", time.Second, func(_ context.Context) { res = append(res, 4) })
+		s.Register(TerminationOrder(1), "Hook3", time.Second, func(_ context.Context) { res = append(res, 1) })
+		s.Register(TerminationOrder(3), "Hook4", time.Second, func(_ context.Context) { res = append(res, 3) })
 
 		cancel()
 
@@ -131,7 +131,7 @@ func TestStopper_waitShutdown(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		s, ctx := NewWithDefaultSignals(ctx, log.Default())
+		s, ctx := NewWithDefaultSignals(ctx)
 		require.NotNil(t, ctx)
 
 		t1Mx := sync.Mutex{}
@@ -141,14 +141,14 @@ func TestStopper_waitShutdown(t *testing.T) {
 
 		goLeakWg := sync.WaitGroup{}
 		goLeakWg.Add(1)
-		s.AddShutdownHook(TerminationOrder(1), "Hook1", time.Nanosecond, func(_ context.Context) {
+		s.Register(TerminationOrder(1), "Hook1", time.Nanosecond, func(_ context.Context) {
 			defer goLeakWg.Done()
 			time.Sleep(500 * time.Millisecond)
 			t1Mx.Lock()
 			defer t1Mx.Unlock()
 			t1 = 1
 		})
-		s.AddShutdownHook(TerminationOrder(2), "Hook2", time.Second, func(_ context.Context) { t2 = 1 })
+		s.Register(TerminationOrder(2), "Hook2", time.Second, func(_ context.Context) { t2 = 1 })
 
 		cancel()
 
@@ -192,7 +192,7 @@ func TestStopper_Wait(t *testing.T) {
 			rootCtx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 
-			s, ctx := NewWithDefaultSignals(rootCtx, log.Default())
+			s, ctx := NewWithDefaultSignals(rootCtx)
 			require.NotNil(t, ctx)
 
 			s.wg.Add(1)
@@ -246,31 +246,35 @@ func Test_withSignals(t *testing.T) {
 	})
 }
 
-func TestNewWithSignals(t *testing.T) {
+func TestStopper_SetLogger(t *testing.T) {
 	type args struct {
 		log Logger
 	}
 	tests := []struct {
-		name string
-		args args
+		name    string
+		args    args
+		wantLog Logger
 	}{
 		{
 			name: "default_logger",
 			args: args{
 				log: log.Default(),
 			},
+			wantLog: log.Default(),
 		},
 		{
 			name: "private_noop_logger",
 			args: args{
 				log: log.Default(),
 			},
+			wantLog: log.Default(),
 		},
 		{
 			name: "nil_logger",
 			args: args{
 				log: nil,
 			},
+			wantLog: noopLogger{},
 		},
 	}
 	for _, tt := range tests {
@@ -279,15 +283,12 @@ func TestNewWithSignals(t *testing.T) {
 			rootCtx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 
-			got, ctx := NewWithSignals(rootCtx, tt.args.log, os.Interrupt)
+			got, ctx := NewWithSignals(rootCtx, os.Interrupt)
 			require.NotNil(t, got)
 			require.NotNil(t, ctx)
 
-			require.NotNil(t, got.termComponentsMx)
-			require.NotNil(t, got.termComponents)
-			require.NotNil(t, got.wg)
-			require.NotNil(t, got.cancelFunc)
-			require.NotNil(t, got.log)
+			got.SetLogger(tt.args.log)
+			require.Equal(t, tt.wantLog, got.log)
 		})
 	}
 }
