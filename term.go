@@ -90,6 +90,15 @@ func withSignals(ctx context.Context, chSignals chan os.Signal, sig ...os.Signal
 	return ctx, cancel
 }
 
+// SetLogger sets the logger implementation.
+// If log is nil, then NOOP logger will be used.
+func (s *Stopper) SetLogger(log Logger) {
+	if log == nil {
+		log = noopLogger{}
+	}
+	s.log = log
+}
+
 // Register registers termination hook with priority and human-readable name.
 // The lower the order the higher the execution priority, the earlier it will be executed.
 // If there are multiple hooks with the same order they will be executed in parallel.
