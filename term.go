@@ -2,6 +2,8 @@ package graterm
 
 import (
 	"context"
+	"os"
+	"os/signal"
 	"sync"
 	"time"
 )
@@ -27,4 +29,28 @@ type Stopper struct {
 	cancelFunc context.CancelFunc // todo check later on if this needed?
 
 	log Logger
+}
+
+// withSignals return a copy of the parent context that will be canceled by signal.
+// If no signals are provided, any incoming signal will cause cancel.
+// Otherwise, just the provided signals will.
+//
+// Note: this method will start internal monitoring goroutine.
+func withSignals(ctx context.Context, sig ...os.Signal) (context.Context, context.CancelFunc) {
+	ctx, cancel := context.WithCancel(ctx)
+
+	chSignals := make(chan os.Signal, 1)
+	signal.Notify(chSignals, sig...)
+
+	// function invoke cancel once a signal arrived OR parent context is done:
+	go func() {
+		defer cancel()
+
+		select {
+		case <-chSignals:
+		case <-ctx.Done():
+		}
+	}()
+
+	return ctx, cancel
 }
