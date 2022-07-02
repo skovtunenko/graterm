@@ -2,8 +2,10 @@ package graterm
 
 import (
 	"context"
+	"errors"
 	"os"
 	"os/signal"
+	"sort"
 	"sync"
 	"syscall"
 	"time"
@@ -79,4 +81,90 @@ func withSignals(ctx context.Context, sig ...os.Signal) (context.Context, contex
 	}()
 
 	return ctx, cancel
+}
+
+// Wait waits (with timeout) for Stopper to finish termination after the ctx is done.
+func (s *Stopper) Wait(ctx context.Context, timeout time.Duration) error {
+	{
+		s.wg.Add(1)
+		go s.waitShutdown(ctx)
+	}
+
+	// block till the end of the app:
+	<-ctx.Done()
+
+	wgChan := waitWG(s.wg)
+
+	select {
+	case <-time.After(timeout):
+		return errors.New("graterm.WaitGroup is timed out") // todo change error text
+	case <-wgChan:
+		return nil
+	}
+}
+
+// waitWG returns a chan that will be closed once wg is done.
+func waitWG(wg *sync.WaitGroup) <-chan struct{} {
+	c := make(chan struct{})
+
+	go func() {
+		defer close(c)
+		wg.Wait()
+	}()
+
+	return c
+}
+
+// waitShutdown waits for the context to be done and then sequentially notifies existing shutdown hooks.
+func (s *Stopper) waitShutdown(appCtx context.Context) {
+	defer s.wg.Done()
+
+	<-appCtx.Done() // Block until application context is done
+
+	s.termComponentsMx.Lock()
+	defer s.termComponentsMx.Unlock()
+
+	order := make([]int, 0, len(s.termComponents))
+	for k := range s.termComponents {
+		order = append(order, int(k))
+	}
+	sort.Ints(order)
+
+	for _, o := range order {
+		runWg := sync.WaitGroup{}
+
+		for _, c := range s.termComponents[TerminationOrder(o)] {
+			runWg.Add(1)
+
+			go func(f terminationFunc) {
+				// todo missing panic recovery
+				defer runWg.Done()
+
+				ctx, cancel := context.WithCancel(context.Background())
+				defer cancel()
+
+				t := time.NewTimer(f.timeout)
+				doneCh := make(chan struct{})
+
+				go func() {
+					// todo missing panic recovery
+					defer close(doneCh)
+					f.hookFunc(ctx)
+				}()
+
+				select {
+				case <-t.C:
+					cancel()
+					// proceed to the next command
+					s.log.Printf("timeout %v for component: %q is over, hook wasn't finished yet - continue to the next component",
+						f.timeout, f.componentName)
+				case <-doneCh:
+					t.Stop() // we don't care if there's anything left in the 't.C' channel
+					// proceed to the next command
+					s.log.Printf("component: %q finished termination", f.componentName)
+				}
+			}(c)
+		}
+		runWg.Wait()
+	}
 }
