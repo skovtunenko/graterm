@@ -176,3 +176,63 @@ func TestStopper_waitShutdown(t *testing.T) {
 		goLeakWg.Wait()
 	})
 }
+
+func TestStopper_Wait(t *testing.T) {
+	tests := []struct {
+		name      string
+		timeout   time.Duration
+		wouldDone bool
+		wantErr   bool
+	}{
+		{
+			name:      "canceled",
+			wouldDone: true,
+			timeout:   time.Minute,
+			wantErr:   false,
+		},
+		{
+			name:      "timeout",
+			wouldDone: false,
+			timeout:   time.Millisecond,
+			wantErr:   true,
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			rootCtx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			s, ctx := NewWithDefaultSignals(rootCtx, log.Default())
+			require.NotNil(t, ctx)
+
+			s.wg.Add(1)
+
+			done := make(chan struct{})
+			var waitErr error
+			go func() {
+				waitErr = s.Wait(ctx, tt.timeout)
+				close(done)
+			}()
+
+			cancel()
+			if tt.wouldDone {
+				s.wg.Done()
+			} else {
+				defer s.wg.Done()
+			}
+
+			select {
+			case <-time.After(time.Second):
+				t.Fatal("waiting group is done timed out")
+			case <-done:
+			}
+
+			if tt.wantErr {
+				require.Error(t, waitErr)
+			} else {
+				require.NoError(t, waitErr)
+			}
+		})
+	}
+}
