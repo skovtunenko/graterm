@@ -2,7 +2,7 @@ package graterm
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"os"
 	"os/signal"
 	"sort"
@@ -114,7 +114,7 @@ func (s *Stopper) Wait(appCtx context.Context, timeout time.Duration) error {
 
 	select {
 	case <-time.After(timeout):
-		return errors.New("graterm.WaitGroup is timed out") // todo change error text
+		return fmt.Errorf("termination timed out after %v", timeout)
 	case <-wgChan:
 		return nil
 	}
