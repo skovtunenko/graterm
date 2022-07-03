@@ -136,7 +136,7 @@ func waitWG(wg *sync.WaitGroup) <-chan struct{} {
 func (s *Stopper) waitShutdown(appCtx context.Context) {
 	defer s.wg.Done()
 
-	<-appCtx.Done() // Block until application context is done (most likely, when the os.Signal will be received)
+	<-appCtx.Done() // Block until application context is done (most likely, when the registered os.Signal will be received)
 
 	s.hooksMx.Lock()
 	defer s.hooksMx.Unlock()
@@ -168,7 +168,8 @@ func (s *Stopper) waitShutdown(appCtx context.Context) {
 						defer cancel()
 
 						if err := recover(); err != nil {
-							s.log.Printf("component: %q (priority: %d) hook panicked, recovered: %+v", f.componentName, o, err)
+							s.log.Printf("registered hook for component: %q (priority: %d) panicked, recovered: %+v",
+								f.componentName, o, err)
 						}
 					}()
 
@@ -178,13 +179,14 @@ func (s *Stopper) waitShutdown(appCtx context.Context) {
 				select {
 				case <-t.C:
 					cancel()
+					s.log.Printf("registered hook for component: %q (priority: %d) timed out after %v",
+						f.componentName, o, f.timeout)
 					// proceed to the next command (if any left)
-					s.log.Printf("timeout %v for component: %q is over, hook wasn't finished yet - continue to the next component",
-						f.timeout, f.componentName)
 				case <-ctx.Done():
 					t.Stop() // we don't care if there's anything left in the 't.C' channel
-					// proceed to the next command
-					s.log.Printf("component: %q finished termination", f.componentName)
+					s.log.Printf("registered hook for component: %q (priority: %d) finished termination in time",
+						f.componentName, o)
+					// proceed to the next command (if any left)
 				}
 			}(c)
 		}
