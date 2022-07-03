@@ -110,7 +110,11 @@ func (s *Stopper) Wait(appCtx context.Context, timeout time.Duration) error {
 
 	<-appCtx.Done()
 
-	wgChan := waitWG(s.wg)
+	wgChan := make(chan struct{})
+	go func() {
+		defer close(wgChan)
+		s.wg.Wait()
+	}()
 
 	select {
 	case <-time.After(timeout):
@@ -118,18 +122,6 @@ func (s *Stopper) Wait(appCtx context.Context, timeout time.Duration) error {
 	case <-wgChan:
 		return nil
 	}
-}
-
-// waitWG returns a chan that will be closed once given wg is done.
-func waitWG(wg *sync.WaitGroup) <-chan struct{} {
-	ch := make(chan struct{})
-
-	go func() {
-		defer close(ch)
-		wg.Wait()
-	}()
-
-	return ch
 }
 
 // waitShutdown waits for the context to be done and then sequentially notifies existing shutdown hooks.
