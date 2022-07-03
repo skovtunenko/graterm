@@ -136,7 +136,7 @@ func waitWG(wg *sync.WaitGroup) <-chan struct{} {
 func (s *Stopper) waitShutdown(appCtx context.Context) {
 	defer s.wg.Done()
 
-	<-appCtx.Done() // Block until application context is done
+	<-appCtx.Done() // Block until application context is done (most likely, when the os.Signal will be received)
 
 	s.hooksMx.Lock()
 	defer s.hooksMx.Unlock()
@@ -156,7 +156,6 @@ func (s *Stopper) waitShutdown(appCtx context.Context) {
 			runWg.Add(1)
 
 			go func(f terminationFunc) {
-				// todo missing panic recovery
 				defer runWg.Done()
 
 				ctx, cancel := context.WithCancel(context.Background())
