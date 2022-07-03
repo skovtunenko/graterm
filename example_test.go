@@ -8,20 +8,38 @@ import (
 	"time"
 )
 
-func ExampleStopper_Wait() {
+func ExampleNewWithSignals() {
+	// create new Stopper instance:
 	stopper, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 
 	// register hooks...
 
 	// Wire other components ...
 
+	// Wait for os.Signal to occur, then terminate application with maximum timeout of 40 seconds:
+	if err := stopper.Wait(appCtx, 40*time.Second); err != nil {
+		log.Printf("graceful termination period is timed out: %+v", err)
+	}
+}
+
+func ExampleStopper_Wait() {
+	// create new Stopper instance:
+	stopper, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+
+	// register hooks...
+
+	// Wire other components ...
+
+	// Wait for os.Signal to occur, then terminate application with maximum timeout of 40 seconds:
 	if err := stopper.Wait(appCtx, 40*time.Second); err != nil {
 		log.Printf("graceful termination period is timed out: %+v", err)
 	}
 }
 
 func ExampleStopper_Register() {
+	// create new Stopper instance:
 	stopper, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+
 	// Register some hooks:
 	{
 		stopper.Register(1, "HOOK#1", 1*time.Second, func(ctx context.Context) {
@@ -48,6 +66,7 @@ func ExampleStopper_Register() {
 			}
 		})
 
+		// Wait for os.Signal to occur, then terminate application with maximum timeout of 40 seconds:
 		if err := stopper.Wait(appCtx, 20*time.Second); err != nil {
 			log.Printf("graceful termination period is timed out: %+v", err)
 		}
