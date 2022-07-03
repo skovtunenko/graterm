@@ -163,14 +163,13 @@ func (s *Stopper) waitShutdown(appCtx context.Context) {
 				defer cancel()
 
 				t := time.NewTimer(f.timeout)
-				doneCh := make(chan struct{})
 
 				go func() {
 					defer func() {
-						defer close(doneCh)
+						defer cancel()
+
 						if err := recover(); err != nil {
 							s.log.Printf("component: %q (priority: %d) hook panicked, recovered: %+v", f.componentName, o, err)
-							cancel()
 						}
 					}()
 
@@ -183,7 +182,7 @@ func (s *Stopper) waitShutdown(appCtx context.Context) {
 					// proceed to the next command
 					s.log.Printf("timeout %v for component: %q is over, hook wasn't finished yet - continue to the next component",
 						f.timeout, f.componentName)
-				case <-doneCh:
+				case <-ctx.Done():
 					t.Stop() // we don't care if there's anything left in the 't.C' channel
 					// proceed to the next command
 					s.log.Printf("component: %q finished termination", f.componentName)
