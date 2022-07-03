@@ -22,6 +22,14 @@ func ExampleNewWithSignals() {
 	}
 }
 
+func ExampleStopper_SetLogger() {
+	// create new Stopper instance:
+	stopper, _ := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+
+	// Set custom logger implementation instead of default NOOP one:
+	stopper.SetLogger(log.Default())
+}
+
 func ExampleStopper_Wait() {
 	// create new Stopper instance:
 	stopper, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
