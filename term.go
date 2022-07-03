@@ -2,7 +2,7 @@ package graterm
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"os"
 	"os/signal"
 	"sort"
@@ -28,7 +28,7 @@ type Stopper struct {
 
 	wg *sync.WaitGroup
 
-	cancelFunc context.CancelFunc // todo check later on if this needed?
+	cancelFunc context.CancelFunc
 
 	log Logger
 }
@@ -114,7 +114,7 @@ func (s *Stopper) Wait(appCtx context.Context, timeout time.Duration) error {
 
 	select {
 	case <-time.After(timeout):
-		return errors.New("graterm.WaitGroup is timed out") // todo change error text
+		return fmt.Errorf("termination timed out after %v", timeout)
 	case <-wgChan:
 		return nil
 	}
@@ -136,7 +136,7 @@ func waitWG(wg *sync.WaitGroup) <-chan struct{} {
 func (s *Stopper) waitShutdown(appCtx context.Context) {
 	defer s.wg.Done()
 
-	<-appCtx.Done() // Block until application context is done
+	<-appCtx.Done() // Block until application context is done (most likely, when the registered os.Signal will be received)
 
 	s.hooksMx.Lock()
 	defer s.hooksMx.Unlock()
@@ -156,7 +156,6 @@ func (s *Stopper) waitShutdown(appCtx context.Context) {
 			runWg.Add(1)
 
 			go func(f terminationFunc) {
-				// todo missing panic recovery
 				defer runWg.Done()
 
 				ctx, cancel := context.WithCancel(context.Background())
@@ -169,7 +168,8 @@ func (s *Stopper) waitShutdown(appCtx context.Context) {
 						defer cancel()
 
 						if err := recover(); err != nil {
-							s.log.Printf("component: %q (priority: %d) hook panicked, recovered: %+v", f.componentName, o, err)
+							s.log.Printf("registered hook for component: %q (priority: %d) panicked, recovered: %+v",
+								f.componentName, o, err)
 						}
 					}()
 
@@ -179,13 +179,14 @@ func (s *Stopper) waitShutdown(appCtx context.Context) {
 				select {
 				case <-t.C:
 					cancel()
-					// proceed to the next command
-					s.log.Printf("timeout %v for component: %q is over, hook wasn't finished yet - continue to the next component",
-						f.timeout, f.componentName)
+					s.log.Printf("registered hook for component: %q (priority: %d) timed out after %v",
+						f.componentName, o, f.timeout)
+					// proceed to the next command (if any left)
 				case <-ctx.Done():
 					t.Stop() // we don't care if there's anything left in the 't.C' channel
-					// proceed to the next command
-					s.log.Printf("component: %q finished termination", f.componentName)
+					s.log.Printf("registered hook for component: %q (priority: %d) finished termination in time",
+						f.componentName, o)
+					// proceed to the next command (if any left)
 				}
 			}(c)
 		}
