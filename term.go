@@ -2,7 +2,9 @@ package graterm
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"sort"
@@ -191,5 +193,49 @@ func (s *Stopper) waitShutdown(appCtx context.Context) {
 		}
 
 		runWg.Wait()
+	}
+}
+
+// serverWrapper provides a methods to start underlying srv asynchronously.
+type serverWrapper struct {
+	log Logger
+
+	srv Server
+}
+
+// ServerAsyncStarterFunc creates an serverWrapper instance with graceful shutdown capabilities.
+// The HTTP server will be gracefully shutdown once appCtx is done.
+//
+// Note: this method will start internal server shutdown monitoring goroutine.
+func (s *Stopper) ServerAsyncStarterFunc(appCtx context.Context, srv Server) func() {
+	srvWithShutdown := &serverWrapper{
+		log: s.log,
+		srv: srv,
+	}
+
+	{
+		s.wg.Add(1)
+		go srvWithShutdown.waitShutdown(appCtx, s.wg)
+	}
+
+	return srvWithShutdown.startAsync
+}
+
+// startAsync starts Server asynchronously.
+func (w *serverWrapper) startAsync() {
+	go func() {
+		w.log.Printf("starting server asynchronously")
+		if err := w.srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			w.log.Printf("server ListenAndServe() finished: %+v", err)
+		}
+	}()
+}
+
+func (w *serverWrapper) waitShutdown(appCtx context.Context, wg *sync.WaitGroup) {
+	defer wg.Done()
+	<-appCtx.Done()
+
+	if err := w.srv.Shutdown(context.Background()); err != nil {
+		w.log.Printf("server Shutdown() finished with error: %+v", err)
 	}
 }
