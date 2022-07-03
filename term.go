@@ -47,6 +47,8 @@ func NewWithDefaultSignals(appCtx context.Context) (*Stopper, context.Context) {
 
 // NewWithSignals creates a new instance of component Stopper.
 //
+// Example of useful signals might be: syscall.SIGINT, syscall.SIGTERM.
+//
 // Note: this method will start internal monitoring goroutine.
 func NewWithSignals(appCtx context.Context, sig ...os.Signal) (*Stopper, context.Context) {
 	chSignals := make(chan os.Signal, 1)
