@@ -2,6 +2,7 @@ package graterm
 
 import (
 	"context"
+	"errors"
 	"github.com/stretchr/testify/require"
 	"log"
 	"os"
@@ -80,6 +81,26 @@ func TestStopper_Register(t *testing.T) {
 		got, ok := s.hooks[TerminationOrder(1)]
 		require.True(t, ok)
 		require.Equal(t, 2, len(got))
+	})
+
+	t.Run("panic_in_registered_hook", func(t *testing.T) {
+		rootCtx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		s, ctx := NewWithSignals(rootCtx, syscall.SIGINT, syscall.SIGTERM)
+		require.NotNil(t, ctx)
+
+		s.Register(TerminationOrder(1), "Panicked Hook1", time.Second, func(_ context.Context) {
+			panic(errors.New("panic in Hook1"))
+		})
+		s.Register(TerminationOrder(2), "Panicked Hook2", time.Second, func(_ context.Context) {
+			panic(errors.New("panic in Hook2"))
+		})
+		require.Equal(t, 2, len(s.hooks))
+
+		cancel()
+		gotErr := s.Wait(ctx, time.Minute) // some long period of time
+		require.NoError(t, gotErr)
 	})
 }
 

@@ -148,6 +148,8 @@ func (s *Stopper) waitShutdown(appCtx context.Context) {
 	sort.Ints(order)
 
 	for _, o := range order {
+		o := o
+
 		runWg := sync.WaitGroup{}
 
 		for _, c := range s.hooks[TerminationOrder(o)] {
@@ -164,8 +166,14 @@ func (s *Stopper) waitShutdown(appCtx context.Context) {
 				doneCh := make(chan struct{})
 
 				go func() {
-					// todo missing panic recovery
-					defer close(doneCh)
+					defer func() {
+						defer close(doneCh)
+						if err := recover(); err != nil {
+							s.log.Printf("component: %q (priority: %d) hook panicked, recovered: %+v", f.componentName, o, err)
+							cancel()
+						}
+					}()
+
 					f.hookFunc(ctx)
 				}()
 
@@ -182,6 +190,7 @@ func (s *Stopper) waitShutdown(appCtx context.Context) {
 				}
 			}(c)
 		}
+
 		runWg.Wait()
 	}
 }
