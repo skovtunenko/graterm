@@ -28,7 +28,7 @@ type Stopper struct {
 
 	wg *sync.WaitGroup
 
-	cancelFunc context.CancelFunc // todo check later on if this needed?
+	cancelFunc context.CancelFunc
 
 	log Logger
 }
