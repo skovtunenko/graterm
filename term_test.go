@@ -13,11 +13,11 @@ import (
 	"time"
 )
 
-func TestNewWithDefaultSignals(t *testing.T) {
+func TestNewWithSignals(t *testing.T) {
 	rootCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	got, ctx := NewWithDefaultSignals(rootCtx)
+	got, ctx := NewWithSignals(rootCtx, syscall.SIGINT, syscall.SIGTERM)
 	require.NotNil(t, got)
 	require.NotNil(t, ctx)
 
@@ -35,7 +35,7 @@ func TestStopper_Register(t *testing.T) {
 		rootCtx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		s, ctx := NewWithDefaultSignals(rootCtx)
+		s, ctx := NewWithSignals(rootCtx, syscall.SIGINT, syscall.SIGTERM)
 		require.NotNil(t, ctx)
 
 		s.Register(TerminationOrder(1), "Hook", 1*time.Second, func(_ context.Context) {})
@@ -50,7 +50,7 @@ func TestStopper_Register(t *testing.T) {
 		rootCtx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		s, ctx := NewWithDefaultSignals(rootCtx)
+		s, ctx := NewWithSignals(rootCtx, syscall.SIGINT, syscall.SIGTERM)
 		require.NotNil(t, ctx)
 
 		s.Register(TerminationOrder(1), "Hook1", time.Second, func(_ context.Context) {})
@@ -70,7 +70,7 @@ func TestStopper_Register(t *testing.T) {
 		rootCtx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		s, ctx := NewWithDefaultSignals(rootCtx)
+		s, ctx := NewWithSignals(rootCtx, syscall.SIGINT, syscall.SIGTERM)
 		require.NotNil(t, ctx)
 
 		s.Register(TerminationOrder(1), "Hook1", time.Second, func(_ context.Context) {})
@@ -88,7 +88,7 @@ func TestStopper_waitShutdown(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		s, ctx := NewWithDefaultSignals(ctx)
+		s, ctx := NewWithSignals(ctx, syscall.SIGINT, syscall.SIGTERM)
 		require.NotNil(t, ctx)
 
 		i := 0
@@ -109,7 +109,7 @@ func TestStopper_waitShutdown(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		s, ctx := NewWithDefaultSignals(ctx)
+		s, ctx := NewWithSignals(ctx, syscall.SIGINT, syscall.SIGTERM)
 		require.NotNil(t, ctx)
 
 		res := make([]int, 0, 4)
@@ -131,7 +131,7 @@ func TestStopper_waitShutdown(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		s, ctx := NewWithDefaultSignals(ctx)
+		s, ctx := NewWithSignals(ctx, syscall.SIGINT, syscall.SIGTERM)
 		require.NotNil(t, ctx)
 
 		t1Mx := sync.Mutex{}
@@ -192,7 +192,7 @@ func TestStopper_Wait(t *testing.T) {
 			rootCtx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 
-			s, ctx := NewWithDefaultSignals(rootCtx)
+			s, ctx := NewWithSignals(rootCtx, syscall.SIGINT, syscall.SIGTERM)
 			require.NotNil(t, ctx)
 
 			s.wg.Add(1)

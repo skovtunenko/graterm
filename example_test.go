@@ -4,11 +4,12 @@ import (
 	"context"
 	"github.com/skovtunenko/graterm"
 	"log"
+	"syscall"
 	"time"
 )
 
 func ExampleStopper_Wait() {
-	stopper, appCtx := graterm.NewWithDefaultSignals(context.Background())
+	stopper, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 
 	// register hooks...
 
@@ -20,7 +21,7 @@ func ExampleStopper_Wait() {
 }
 
 func ExampleStopper_Register() {
-	stopper, appCtx := graterm.NewWithDefaultSignals(context.Background())
+	stopper, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	// Register some hooks:
 	{
 		stopper.Register(1, "HOOK#1", 1*time.Second, func(ctx context.Context) {

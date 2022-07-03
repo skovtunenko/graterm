@@ -7,12 +7,8 @@ import (
 	"os/signal"
 	"sort"
 	"sync"
-	"syscall"
 	"time"
 )
-
-// defaultSignals is a default set of signals to handle.
-var defaultSignals = []os.Signal{syscall.SIGINT, syscall.SIGTERM}
 
 // TerminationOrder is an application components termination order.
 //
@@ -35,14 +31,6 @@ type Stopper struct {
 	cancelFunc context.CancelFunc // todo check later on if this needed?
 
 	log Logger
-}
-
-// NewWithDefaultSignals creates a new instance of component Stopper.
-// Invokes withSignals with syscall.SIGINT and syscall.SIGTERM as default signals.
-//
-// Note: this method will start internal monitoring goroutine.
-func NewWithDefaultSignals(appCtx context.Context) (*Stopper, context.Context) {
-	return NewWithSignals(appCtx, defaultSignals...)
 }
 
 // NewWithSignals creates a new instance of component Stopper.
