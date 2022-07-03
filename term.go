@@ -178,7 +178,7 @@ func (s *Stopper) waitShutdown(appCtx context.Context) {
 				select {
 				case <-t.C:
 					cancel()
-					// proceed to the next command
+					// proceed to the next command (if any left)
 					s.log.Printf("timeout %v for component: %q is over, hook wasn't finished yet - continue to the next component",
 						f.timeout, f.componentName)
 				case <-ctx.Done():
