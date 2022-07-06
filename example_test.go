@@ -2,8 +2,10 @@ package graterm_test
 
 import (
 	"context"
+	"fmt"
 	"github.com/skovtunenko/graterm"
 	"log"
+	"net/http"
 	"syscall"
 	"time"
 )
@@ -18,7 +20,7 @@ func ExampleNewWithSignals() {
 
 	// Wait for os.Signal to occur, then terminate application with maximum timeout of 40 seconds:
 	if err := stopper.Wait(appCtx, 40*time.Second); err != nil {
-		log.Printf("graceful termination period is timed out: %+v", err)
+		log.Printf("graceful termination period was timed out: %+v", err)
 	}
 }
 
@@ -40,7 +42,7 @@ func ExampleStopper_Wait() {
 
 	// Wait for os.Signal to occur, then terminate application with maximum timeout of 40 seconds:
 	if err := stopper.Wait(appCtx, 40*time.Second); err != nil {
-		log.Printf("graceful termination period is timed out: %+v", err)
+		log.Printf("graceful termination period was timed out: %+v", err)
 	}
 }
 
@@ -76,7 +78,35 @@ func ExampleStopper_Register() {
 
 		// Wait for os.Signal to occur, then terminate application with maximum timeout of 40 seconds:
 		if err := stopper.Wait(appCtx, 20*time.Second); err != nil {
-			log.Printf("graceful termination period is timed out: %+v", err)
+			log.Printf("graceful termination period was timed out: %+v", err)
 		}
+	}
+}
+
+func ExampleStopper_ServerAsyncStarterFunc() {
+	stopper, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+
+	// Register some hooks:
+	stopper.Register(3, "HOOK", 1*time.Second, func(ctx context.Context) {
+		log.Println("terminating HOOK...")
+		defer log.Println("...HOOK terminated")
+	})
+
+	const hostPort = ":8080"
+	server := &http.Server{
+		Addr:    hostPort,
+		Handler: http.DefaultServeMux,
+	}
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "hello, world!\n")
+	})
+
+	asyncStarterFunc := stopper.ServerAsyncStarterFunc(appCtx, server)
+	// ... here it might be some actions before we need to start the server.....
+	asyncStarterFunc()
+	log.Printf("application started on: %q\n", hostPort)
+
+	if err := stopper.Wait(appCtx, 40*time.Second); err != nil {
+		log.Printf("graceful termination period was timed out: %+v", err)
 	}
 }
