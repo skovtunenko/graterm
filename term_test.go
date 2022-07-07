@@ -29,7 +29,7 @@ func TestNewWithSignals(t *testing.T) {
 	require.NotNil(t, got.log)
 }
 
-func TestStopper_Register(t *testing.T) {
+func TestTerminator_Register(t *testing.T) {
 	t.Parallel()
 
 	t.Run("add_only_one_hook", func(t *testing.T) {
@@ -104,7 +104,7 @@ func TestStopper_Register(t *testing.T) {
 	})
 }
 
-func TestStopper_waitShutdown(t *testing.T) {
+func TestTerminator_waitShutdown(t *testing.T) {
 	t.Run("execution_waits_for_the_context_to_be_done_before_proceeding", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -187,7 +187,7 @@ func TestStopper_waitShutdown(t *testing.T) {
 	})
 }
 
-func TestStopper_Wait(t *testing.T) {
+func TestTerminator_Wait(t *testing.T) {
 	tests := []struct {
 		name      string
 		timeout   time.Duration
@@ -267,7 +267,7 @@ func Test_withSignals(t *testing.T) {
 	})
 }
 
-func TestStopper_SetLogger(t *testing.T) {
+func TestTerminator_SetLogger(t *testing.T) {
 	type args struct {
 		log Logger
 	}

@@ -21,8 +21,8 @@ type terminationFunc struct {
 	hookFunc      func(ctx context.Context)
 }
 
-// Stopper is a component stopper that executes registered termination hooks in a specified order.
-type Stopper struct {
+// Terminator is a component terminator that executes registered termination hooks in a specified order.
+type Terminator struct {
 	hooksMx *sync.Mutex
 	hooks   map[TerminationOrder][]terminationFunc
 
@@ -40,15 +40,15 @@ type Server interface {
 	Shutdown(ctx context.Context) error
 }
 
-// NewWithSignals creates a new instance of component Stopper.
+// NewWithSignals creates a new instance of component Terminator.
 //
 // Example of useful signals might be: syscall.SIGINT, syscall.SIGTERM.
 //
 // Note: this method will start internal monitoring goroutine.
-func NewWithSignals(appCtx context.Context, sig ...os.Signal) (*Stopper, context.Context) {
+func NewWithSignals(appCtx context.Context, sig ...os.Signal) (*Terminator, context.Context) {
 	chSignals := make(chan os.Signal, 1)
 	ctx, cancel := withSignals(appCtx, chSignals, sig...)
-	return &Stopper{
+	return &Terminator{
 		hooksMx:    &sync.Mutex{},
 		hooks:      make(map[TerminationOrder][]terminationFunc),
 		wg:         &sync.WaitGroup{},
@@ -83,7 +83,7 @@ func withSignals(ctx context.Context, chSignals chan os.Signal, sig ...os.Signal
 // SetLogger sets the logger implementation.
 //
 // If log is nil, then NOOP logger will be used.
-func (s *Stopper) SetLogger(log Logger) {
+func (s *Terminator) SetLogger(log Logger) {
 	if log == nil {
 		log = noopLogger{}
 	}
@@ -96,7 +96,7 @@ func (s *Stopper) SetLogger(log Logger) {
 // Register registers termination hook with priority and human-readable name.
 // The lower the order the higher the execution priority, the earlier it will be executed.
 // If there are multiple hooks with the same order they will be executed in parallel.
-func (s *Stopper) Register(order TerminationOrder, componentName string, timeout time.Duration, hookFunc func(ctx context.Context)) {
+func (s *Terminator) Register(order TerminationOrder, componentName string, timeout time.Duration, hookFunc func(ctx context.Context)) {
 	comm := terminationFunc{
 		componentName: componentName,
 		timeout:       timeout,
@@ -108,8 +108,8 @@ func (s *Stopper) Register(order TerminationOrder, componentName string, timeout
 	s.hooks[order] = append(s.hooks[order], comm)
 }
 
-// Wait waits (with timeout) for Stopper to finish termination after the appCtx is done.
-func (s *Stopper) Wait(appCtx context.Context, timeout time.Duration) error {
+// Wait waits (with timeout) for Terminator to finish termination after the appCtx is done.
+func (s *Terminator) Wait(appCtx context.Context, timeout time.Duration) error {
 	{
 		s.wg.Add(1)
 		go s.waitShutdown(appCtx)
@@ -132,7 +132,7 @@ func (s *Stopper) Wait(appCtx context.Context, timeout time.Duration) error {
 }
 
 // waitShutdown waits for the context to be done and then sequentially notifies existing shutdown hooks.
-func (s *Stopper) waitShutdown(appCtx context.Context) {
+func (s *Terminator) waitShutdown(appCtx context.Context) {
 	defer s.wg.Done()
 
 	<-appCtx.Done() // Block until application context is done (most likely, when the registered os.Signal will be received)
