@@ -76,7 +76,7 @@ func withSignals(ctx context.Context, chSignals chan os.Signal, sig ...os.Signal
 
 // SetLogger sets the logger implementation.
 //
-// If log is nil, then NOOP logger will be used.
+// If log is nil, then NOOP logger implementation will be used.
 func (s *Terminator) SetLogger(log Logger) {
 	if log == nil {
 		log = noopLogger{}
