@@ -17,6 +17,9 @@ import (
 type TerminationOrder int
 
 type terminationFunc struct {
+	terminator *Terminator
+
+	order         TerminationOrder
 	componentName string
 	timeout       time.Duration
 	hookFunc      func(ctx context.Context)
@@ -87,9 +90,32 @@ func (s *Terminator) SetLogger(log Logger) {
 	s.log = log
 }
 
+func (s *Terminator) Order(order TerminationOrder) *terminationFunc {
+	return &terminationFunc{
+		terminator: s,
+		order:      order,
+	}
+}
+
+func (tf *terminationFunc) WithName(componentName string) *terminationFunc {
+	tf.componentName = componentName
+	return tf
+}
+
+func (tf *terminationFunc) Register(timeout time.Duration, hookFunc func(ctx context.Context)) {
+	tf.timeout = timeout
+	tf.hookFunc = hookFunc
+
+	tf.terminator.hooksMx.Lock()
+	defer tf.terminator.hooksMx.Unlock()
+	tf.terminator.hooks[tf.order] = append(tf.terminator.hooks[tf.order], *tf)
+}
+
 // Register registers termination hook with priority and human-readable name.
 // The lower the order the higher the execution priority, the earlier it will be executed.
 // If there are multiple hooks with the same order they will be executed in parallel.
+//
+// Deprecated: use Order instead.
 func (s *Terminator) Register(order TerminationOrder, componentName string, timeout time.Duration, hookFunc func(ctx context.Context)) {
 	comm := terminationFunc{
 		componentName: componentName,
