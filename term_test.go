@@ -5,7 +5,6 @@ import (
 	"errors"
 	"github.com/stretchr/testify/require"
 	"log"
-	"net/http"
 	"os"
 	"os/signal"
 	"runtime"
@@ -311,54 +310,6 @@ func TestStopper_SetLogger(t *testing.T) {
 
 			got.SetLogger(tt.args.log)
 			require.Equal(t, tt.wantLog, got.log)
-		})
-	}
-}
-
-// mockServer is a mocked NOOP Server.
-type mockServer struct {
-	expectedErr error
-}
-
-func (m *mockServer) ListenAndServe() error {
-	return m.expectedErr
-}
-
-func (m *mockServer) Shutdown(_ context.Context) error {
-	return m.expectedErr
-}
-
-func TestNewServerWithShutdown(t *testing.T) {
-	tests := []struct {
-		name                 string
-		serverTerminationErr error
-	}{
-		{
-			name:                 "Regular server termination",
-			serverTerminationErr: http.ErrServerClosed,
-		},
-		{
-			name:                 "Unexpected server termination",
-			serverTerminationErr: http.ErrAbortHandler,
-		},
-	}
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
-
-			s, ctx := NewWithSignals(ctx, os.Interrupt)
-			require.NotNil(t, ctx)
-
-			httpServer := &mockServer{
-				tt.serverTerminationErr,
-			}
-
-			asyncStarterFunc := s.ServerAsyncStarterFunc(ctx, httpServer)
-			asyncStarterFunc()
 		})
 	}
 }
