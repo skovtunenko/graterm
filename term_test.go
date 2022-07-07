@@ -29,6 +29,91 @@ func TestNewWithSignals(t *testing.T) {
 	require.NotNil(t, got.log)
 }
 
+func TestTerminator_FluentRegister(t *testing.T) {
+	t.Parallel()
+
+	t.Run("add_only_one_hook", func(t *testing.T) {
+		rootCtx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		s, ctx := NewWithSignals(rootCtx, syscall.SIGINT, syscall.SIGTERM)
+		require.NotNil(t, ctx)
+
+		s.Order(1).
+			WithName("Hook").
+			Register(1*time.Second, func(_ context.Context) {})
+
+		require.Equal(t, 1, len(s.hooks))
+		got, ok := s.hooks[TerminationOrder(1)]
+		require.True(t, ok)
+		require.Equal(t, 1, len(got))
+	})
+
+	t.Run("add_with_different_order", func(t *testing.T) {
+		rootCtx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		s, ctx := NewWithSignals(rootCtx, syscall.SIGINT, syscall.SIGTERM)
+		require.NotNil(t, ctx)
+
+		s.Order(1).
+			WithName("Hook1").
+			Register(1*time.Second, func(_ context.Context) {})
+		s.Order(2).
+			WithName("Hook2").
+			Register(1*time.Second, func(_ context.Context) {})
+
+		require.Equal(t, 2, len(s.hooks))
+		got, ok := s.hooks[TerminationOrder(1)]
+		require.True(t, ok)
+		require.Equal(t, 1, len(got))
+
+		got2, ok2 := s.hooks[TerminationOrder(2)]
+		require.True(t, ok2)
+		require.Equal(t, 1, len(got2))
+	})
+
+	t.Run("add_with_the_same_order", func(t *testing.T) {
+		rootCtx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		s, ctx := NewWithSignals(rootCtx, syscall.SIGINT, syscall.SIGTERM)
+		require.NotNil(t, ctx)
+
+		s.Order(1).
+			WithName("Hook1").
+			Register(1*time.Second, func(_ context.Context) {})
+		s.Order(1).
+			WithName("Hook2").
+			Register(1*time.Second, func(_ context.Context) {})
+
+		require.Equal(t, 1, len(s.hooks))
+		got, ok := s.hooks[TerminationOrder(1)]
+		require.True(t, ok)
+		require.Equal(t, 2, len(got))
+	})
+
+	t.Run("panic_in_registered_hook", func(t *testing.T) {
+		rootCtx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		s, ctx := NewWithSignals(rootCtx, syscall.SIGINT, syscall.SIGTERM)
+		require.NotNil(t, ctx)
+
+		s.Order(1).
+			WithName("Panicked Hook1").
+			Register(1*time.Second, func(_ context.Context) { panic(errors.New("panic in Hook1")) })
+		s.Order(2).
+			WithName("Panicked Hook2").
+			Register(1*time.Second, func(_ context.Context) { panic(errors.New("panic in Hook2")) })
+		require.Equal(t, 2, len(s.hooks))
+
+		cancel()
+		gotErr := s.Wait(ctx, time.Minute) // some long period of time
+		require.NoError(t, gotErr)
+	})
+}
+
 func TestTerminator_Register(t *testing.T) {
 	t.Parallel()
 
