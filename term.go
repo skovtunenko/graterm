@@ -2,6 +2,7 @@ package graterm
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -150,17 +151,15 @@ func (s *Terminator) waitShutdown(appCtx context.Context) {
 			go func(f terminationFunc) {
 				defer runWg.Done()
 
-				ctx, cancel := context.WithCancel(context.Background())
+				ctx, cancel := context.WithTimeout(context.Background(), f.timeout)
 				defer cancel()
-
-				t := time.NewTimer(f.timeout)
 
 				go func() {
 					defer func() {
 						defer cancel()
 
 						if err := recover(); err != nil {
-							s.log.Printf("registered hook for component: %q (priority: %d) panicked, recovered: %+v",
+							s.log.Printf("registered hook for component: %q (order: %d) panicked, recovered: %+v",
 								f.componentName, o, err)
 						}
 					}()
@@ -168,17 +167,13 @@ func (s *Terminator) waitShutdown(appCtx context.Context) {
 					f.hookFunc(ctx)
 				}()
 
-				select {
-				case <-t.C:
-					cancel()
-					s.log.Printf("registered hook for component: %q (priority: %d) timed out after %v",
-						f.componentName, o, f.timeout)
-					// proceed to the next command (if any left)
-				case <-ctx.Done():
-					t.Stop() // we don't care if there's anything left in the 't.C' channel
-					s.log.Printf("registered hook for component: %q (priority: %d) finished termination in time",
-						f.componentName, o)
-					// proceed to the next command (if any left)
+				<-ctx.Done() // block until the hookFunc is over OR timeout has been expired
+
+				switch err := ctx.Err(); {
+				case errors.Is(err, context.DeadlineExceeded):
+					s.log.Printf("registered hook for component: %q (order: %d) timed out after %v", f.componentName, o, f.timeout)
+				case errors.Is(err, context.Canceled):
+					s.log.Printf("registered hook for component: %q (order: %d) finished termination in time", f.componentName, o)
 				}
 			}(c)
 		}
