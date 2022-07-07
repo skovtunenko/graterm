@@ -81,7 +81,7 @@ func ExampleTerminator_Register() {
 	}
 }
 
-func ExampleTerminator_Order() {
+func ExampleTerminator_WithOrder() {
 	// create new Terminator instance:
 	terminator, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 
