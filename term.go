@@ -33,13 +33,6 @@ type Terminator struct {
 	log Logger
 }
 
-// Server is a generic Server. Well-known implementation is a built-in http.Server.
-// Interface was introduced for testing purposes mainly.
-type Server interface {
-	ListenAndServe() error
-	Shutdown(ctx context.Context) error
-}
-
 // NewWithSignals creates a new instance of component Terminator.
 //
 // Example of useful signals might be: syscall.SIGINT, syscall.SIGTERM.
