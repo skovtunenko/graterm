@@ -87,21 +87,21 @@ func ExampleTerminator_Order() {
 
 	// Register some hooks:
 	{
-		terminator.Order(1).
+		terminator.WithOrder(1).
 			WithName("HOOK#1").
 			Register(1*time.Second, func(ctx context.Context) {
 				log.Println("terminating HOOK#1...")
 				defer log.Println("...HOOK#1 terminated")
 			})
 
-		terminator.Order(1).
+		terminator.WithOrder(1).
 			WithName("HOOK#2").
 			Register(1*time.Second, func(ctx context.Context) {
 				log.Println("terminating HOOK#2...")
 				defer log.Println("...HOOK#2 terminated")
 			})
 
-		terminator.Order(2).
+		terminator.WithOrder(2).
 			WithName("HOOK#3").
 			Register(1*time.Second, func(ctx context.Context) {
 				log.Println("terminating HOOK#3...")

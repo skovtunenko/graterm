@@ -39,7 +39,7 @@ func TestTerminator_FluentRegister(t *testing.T) {
 		s, ctx := NewWithSignals(rootCtx, syscall.SIGINT, syscall.SIGTERM)
 		require.NotNil(t, ctx)
 
-		s.Order(1).
+		s.WithOrder(1).
 			WithName("Hook").
 			Register(1*time.Second, func(_ context.Context) {})
 
@@ -56,10 +56,10 @@ func TestTerminator_FluentRegister(t *testing.T) {
 		s, ctx := NewWithSignals(rootCtx, syscall.SIGINT, syscall.SIGTERM)
 		require.NotNil(t, ctx)
 
-		s.Order(1).
+		s.WithOrder(1).
 			WithName("Hook1").
 			Register(1*time.Second, func(_ context.Context) {})
-		s.Order(2).
+		s.WithOrder(2).
 			WithName("Hook2").
 			Register(1*time.Second, func(_ context.Context) {})
 
@@ -80,10 +80,10 @@ func TestTerminator_FluentRegister(t *testing.T) {
 		s, ctx := NewWithSignals(rootCtx, syscall.SIGINT, syscall.SIGTERM)
 		require.NotNil(t, ctx)
 
-		s.Order(1).
+		s.WithOrder(1).
 			WithName("Hook1").
 			Register(1*time.Second, func(_ context.Context) {})
-		s.Order(1).
+		s.WithOrder(1).
 			WithName("Hook2").
 			Register(1*time.Second, func(_ context.Context) {})
 
@@ -100,10 +100,10 @@ func TestTerminator_FluentRegister(t *testing.T) {
 		s, ctx := NewWithSignals(rootCtx, syscall.SIGINT, syscall.SIGTERM)
 		require.NotNil(t, ctx)
 
-		s.Order(1).
+		s.WithOrder(1).
 			WithName("Panicked Hook1").
 			Register(1*time.Second, func(_ context.Context) { panic(errors.New("panic in Hook1")) })
-		s.Order(2).
+		s.WithOrder(2).
 			WithName("Panicked Hook2").
 			Register(1*time.Second, func(_ context.Context) { panic(errors.New("panic in Hook2")) })
 		require.Equal(t, 2, len(s.hooks))

@@ -90,7 +90,7 @@ func (s *Terminator) SetLogger(log Logger) {
 	s.log = log
 }
 
-func (s *Terminator) Order(order TerminationOrder) *terminationFunc {
+func (s *Terminator) WithOrder(order TerminationOrder) *terminationFunc {
 	return &terminationFunc{
 		terminator: s,
 		order:      order,
@@ -115,7 +115,7 @@ func (tf *terminationFunc) Register(timeout time.Duration, hookFunc func(ctx con
 // The lower the order the higher the execution priority, the earlier it will be executed.
 // If there are multiple hooks with the same order they will be executed in parallel.
 //
-// Deprecated: use Order instead.
+// Deprecated: use WithOrder instead.
 func (s *Terminator) Register(order TerminationOrder, componentName string, timeout time.Duration, hookFunc func(ctx context.Context)) {
 	comm := terminationFunc{
 		componentName: componentName,
