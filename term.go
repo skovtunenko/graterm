@@ -215,8 +215,7 @@ func (s *Terminator) waitShutdown(appCtx context.Context) {
 						defer cancel()
 
 						if err := recover(); err != nil {
-							s.log.Printf("registered hook for component: %q (order: %d) panicked, recovered: %+v",
-								f.componentName, o, err)
+							s.log.Printf("registered hook panicked for %v, recovered: %+v", f, err)
 						}
 					}()
 
@@ -227,9 +226,9 @@ func (s *Terminator) waitShutdown(appCtx context.Context) {
 
 				switch err := ctx.Err(); {
 				case errors.Is(err, context.DeadlineExceeded):
-					s.log.Printf("registered hook for component: %q (order: %d) timed out after %v", f.componentName, o, f.timeout)
+					s.log.Printf("registered hook timed out for %v", f)
 				case errors.Is(err, context.Canceled):
-					s.log.Printf("registered hook for component: %q (order: %d) finished termination in time", f.componentName, o)
+					s.log.Printf("registered hook finished termination in time for %v", f)
 				}
 			}(c)
 		}
