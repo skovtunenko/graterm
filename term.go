@@ -109,6 +109,11 @@ func (s *Terminator) SetLogger(log Logger) {
 	s.log = log
 }
 
+// WithOrder sets the TerminationOrder for the termination hook.
+// It starts registration chain to register termination hook with priority.
+//
+// The lower the order the higher the execution priority, the earlier it will be executed.
+// If there are multiple hooks with the same order they will be executed in parallel.
 func (s *Terminator) WithOrder(order TerminationOrder) *terminationFunc {
 	return &terminationFunc{
 		terminator: s,
@@ -116,11 +121,14 @@ func (s *Terminator) WithOrder(order TerminationOrder) *terminationFunc {
 	}
 }
 
+// WithName sets (optional) human-readable name of the registered termination hook.
 func (tf *terminationFunc) WithName(componentName string) *terminationFunc {
 	tf.componentName = componentName
 	return tf
 }
 
+// Register registers termination hook that should finish execution in less than given timeout.
+// Timeout duration must be greater than zero; if not, timeout of 1 min will be used.
 func (tf *terminationFunc) Register(timeout time.Duration, hookFunc func(ctx context.Context)) {
 	if timeout <= 0 {
 		timeout = defaultTimeout
