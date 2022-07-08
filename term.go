@@ -12,6 +12,11 @@ import (
 	"time"
 )
 
+const (
+	// defaultTimeout is a default timeout for a registered hook.
+	defaultTimeout = time.Minute
+)
+
 // TerminationOrder is an application components termination order.
 //
 // Lower order - higher priority.
@@ -117,6 +122,9 @@ func (tf *terminationFunc) WithName(componentName string) *terminationFunc {
 }
 
 func (tf *terminationFunc) Register(timeout time.Duration, hookFunc func(ctx context.Context)) {
+	if timeout <= 0 {
+		timeout = defaultTimeout
+	}
 	tf.timeout = timeout
 	tf.hookFunc = hookFunc
 
