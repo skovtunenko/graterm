@@ -131,81 +131,6 @@ func TestTerminator_FluentRegister(t *testing.T) {
 	})
 }
 
-func TestTerminator_Register(t *testing.T) {
-	t.Parallel()
-
-	t.Run("add_only_one_hook", func(t *testing.T) {
-		rootCtx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-
-		terminator, ctx := NewWithSignals(rootCtx, syscall.SIGINT, syscall.SIGTERM)
-		require.NotNil(t, ctx)
-
-		terminator.Register(TerminationOrder(1), "Hook", 1*time.Second, func(_ context.Context) {})
-
-		require.Equal(t, 1, len(terminator.hooks))
-		got, ok := terminator.hooks[TerminationOrder(1)]
-		require.True(t, ok)
-		require.Equal(t, 1, len(got))
-	})
-
-	t.Run("add_with_different_order", func(t *testing.T) {
-		rootCtx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-
-		terminator, ctx := NewWithSignals(rootCtx, syscall.SIGINT, syscall.SIGTERM)
-		require.NotNil(t, ctx)
-
-		terminator.Register(TerminationOrder(1), "Hook1", time.Second, func(_ context.Context) {})
-		terminator.Register(TerminationOrder(2), "Hook2", time.Second, func(_ context.Context) {})
-
-		require.Equal(t, 2, len(terminator.hooks))
-		got, ok := terminator.hooks[TerminationOrder(1)]
-		require.True(t, ok)
-		require.Equal(t, 1, len(got))
-
-		got2, ok2 := terminator.hooks[TerminationOrder(2)]
-		require.True(t, ok2)
-		require.Equal(t, 1, len(got2))
-	})
-
-	t.Run("add_with_the_same_order", func(t *testing.T) {
-		rootCtx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-
-		terminator, ctx := NewWithSignals(rootCtx, syscall.SIGINT, syscall.SIGTERM)
-		require.NotNil(t, ctx)
-
-		terminator.Register(TerminationOrder(1), "Hook1", time.Second, func(_ context.Context) {})
-		terminator.Register(TerminationOrder(1), "Hook2", time.Second, func(_ context.Context) {})
-
-		require.Equal(t, 1, len(terminator.hooks))
-		got, ok := terminator.hooks[TerminationOrder(1)]
-		require.True(t, ok)
-		require.Equal(t, 2, len(got))
-	})
-
-	t.Run("panic_in_registered_hook", func(t *testing.T) {
-		rootCtx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-
-		terminator, ctx := NewWithSignals(rootCtx, syscall.SIGINT, syscall.SIGTERM)
-		require.NotNil(t, ctx)
-
-		terminator.Register(TerminationOrder(1), "Panicked Hook1", time.Second, func(_ context.Context) {
-			panic(errors.New("panic in Hook1"))
-		})
-		terminator.Register(TerminationOrder(2), "Panicked Hook2", time.Second, func(_ context.Context) {
-			panic(errors.New("panic in Hook2"))
-		})
-		require.Equal(t, 2, len(terminator.hooks))
-
-		cancel()
-		gotErr := terminator.Wait(ctx, time.Minute) // some long period of time
-		require.NoError(t, gotErr)
-	})
-}
-
 func TestTerminator_waitShutdown(t *testing.T) {
 	t.Run("execution_waits_for_the_context_to_be_done_before_proceeding", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
@@ -215,7 +140,7 @@ func TestTerminator_waitShutdown(t *testing.T) {
 		require.NotNil(t, ctx)
 
 		i := 0
-		terminator.Register(TerminationOrder(1), "Hook", time.Second, func(_ context.Context) { i = 1 })
+		terminator.WithOrder(1).WithName("Hook").Register(time.Second, func(_ context.Context) { i = 1 })
 
 		terminator.wg.Add(1)
 		go terminator.waitShutdown(ctx)
@@ -236,10 +161,10 @@ func TestTerminator_waitShutdown(t *testing.T) {
 		require.NotNil(t, ctx)
 
 		res := make([]int, 0, 4)
-		terminator.Register(TerminationOrder(2), "Hook1", time.Second, func(_ context.Context) { res = append(res, 2) })
-		terminator.Register(TerminationOrder(4), "Hook2", time.Second, func(_ context.Context) { res = append(res, 4) })
-		terminator.Register(TerminationOrder(1), "Hook3", time.Second, func(_ context.Context) { res = append(res, 1) })
-		terminator.Register(TerminationOrder(3), "Hook4", time.Second, func(_ context.Context) { res = append(res, 3) })
+		terminator.WithOrder(2).WithName("Hook1").Register(time.Second, func(_ context.Context) { res = append(res, 2) })
+		terminator.WithOrder(4).WithName("Hook2").Register(time.Second, func(_ context.Context) { res = append(res, 4) })
+		terminator.WithOrder(1).WithName("Hook3").Register(time.Second, func(_ context.Context) { res = append(res, 1) })
+		terminator.WithOrder(3).WithName("Hook4").Register(time.Second, func(_ context.Context) { res = append(res, 3) })
 
 		cancel()
 
@@ -264,14 +189,17 @@ func TestTerminator_waitShutdown(t *testing.T) {
 
 		goLeakWg := sync.WaitGroup{}
 		goLeakWg.Add(1)
-		terminator.Register(TerminationOrder(1), "Hook1", time.Nanosecond, func(_ context.Context) {
-			defer goLeakWg.Done()
-			time.Sleep(500 * time.Millisecond)
-			t1Mx.Lock()
-			defer t1Mx.Unlock()
-			t1 = 1
-		})
-		terminator.Register(TerminationOrder(2), "Hook2", time.Second, func(_ context.Context) { t2 = 1 })
+		terminator.WithOrder(1).WithName("Hook1").
+			Register(time.Nanosecond, func(_ context.Context) {
+				defer goLeakWg.Done()
+				time.Sleep(500 * time.Millisecond)
+				t1Mx.Lock()
+				defer t1Mx.Unlock()
+				t1 = 1
+			})
+		terminator.WithOrder(2).
+			WithName("Hook2").
+			Register(time.Second, func(_ context.Context) { t2 = 1 })
 
 		cancel()
 
