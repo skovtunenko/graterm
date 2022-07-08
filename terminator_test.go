@@ -29,7 +29,7 @@ func TestNewWithSignals(t *testing.T) {
 	require.NotNil(t, got.log)
 }
 
-func TestTerminator_FluentRegister(t *testing.T) {
+func TestTerminator_Register(t *testing.T) {
 	t.Parallel()
 
 	t.Run("add_only_one_hook_with_negative_timeout", func(t *testing.T) {
@@ -340,61 +340,6 @@ func TestTerminator_SetLogger(t *testing.T) {
 
 			got.SetLogger(tt.args.log)
 			require.Equal(t, tt.wantLog, got.log)
-		})
-	}
-}
-
-func Test_terminationFunc_String(t *testing.T) {
-	type fields struct {
-		tf *terminationFunc
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		want   string
-	}{
-		{
-			name: "nil_struct",
-			fields: fields{
-				tf: nil,
-			},
-			want: `<nil>`,
-		},
-		{
-			name: "empty_non-nil_struct",
-			fields: fields{
-				tf: &terminationFunc{},
-			},
-			want: `nameless component (order: 0)`,
-		},
-		{
-			name: "nameless_termination_func",
-			fields: fields{
-				tf: &terminationFunc{
-					order:         3,
-					componentName: "   ",
-				},
-			},
-			want: `nameless component (order: 3)`,
-		},
-		{
-			name: "termination_function_with_a_name",
-			fields: fields{
-				tf: &terminationFunc{
-					order:         777,
-					componentName: "some random name",
-				},
-			},
-			want: `component: "some random name" (order: 777)`,
-		},
-	}
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			got := tt.fields.tf.String()
-			require.Equal(t, tt.want, got)
 		})
 	}
 }

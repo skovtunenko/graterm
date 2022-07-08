@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/signal"
 	"sort"
-	"strings"
 	"sync"
 	"time"
 )
@@ -17,37 +16,10 @@ const (
 	defaultTimeout = time.Minute
 )
 
-// TerminationOrder is an application components termination order.
-//
-// Lower order - higher priority.
-type TerminationOrder int
-
-type terminationFunc struct {
-	terminator *Terminator
-
-	order         TerminationOrder
-	componentName string
-	timeout       time.Duration
-	hookFunc      func(ctx context.Context)
-}
-
-var _ fmt.Stringer = &terminationFunc{}
-
-// String returns string representation of terminationFunc.
-func (tf *terminationFunc) String() string {
-	if tf == nil {
-		return "<nil>"
-	}
-	if strings.TrimSpace(tf.componentName) == "" {
-		return fmt.Sprintf("nameless component (order: %d)", tf.order)
-	}
-	return fmt.Sprintf("component: %q (order: %d)", tf.componentName, tf.order)
-}
-
 // Terminator is a component terminator that executes registered termination hooks in a specified order.
 type Terminator struct {
 	hooksMx *sync.Mutex
-	hooks   map[TerminationOrder][]terminationFunc
+	hooks   map[TerminationOrder][]terminationHook
 
 	wg *sync.WaitGroup
 
@@ -66,7 +38,7 @@ func NewWithSignals(appCtx context.Context, sig ...os.Signal) (*Terminator, cont
 	ctx, cancel := withSignals(appCtx, chSignals, sig...)
 	return &Terminator{
 		hooksMx:    &sync.Mutex{},
-		hooks:      make(map[TerminationOrder][]terminationFunc),
+		hooks:      make(map[TerminationOrder][]terminationHook),
 		wg:         &sync.WaitGroup{},
 		cancelFunc: cancel,
 		log:        noopLogger{},
@@ -114,31 +86,11 @@ func (s *Terminator) SetLogger(log Logger) {
 //
 // The lower the order the higher the execution priority, the earlier it will be executed.
 // If there are multiple hooks with the same order they will be executed in parallel.
-func (s *Terminator) WithOrder(order TerminationOrder) *terminationFunc {
-	return &terminationFunc{
+func (s *Terminator) WithOrder(order TerminationOrder) *terminationHook {
+	return &terminationHook{
 		terminator: s,
 		order:      order,
 	}
-}
-
-// WithName sets (optional) human-readable name of the registered termination hook.
-func (tf *terminationFunc) WithName(componentName string) *terminationFunc {
-	tf.componentName = componentName
-	return tf
-}
-
-// Register registers termination hook that should finish execution in less than given timeout.
-// Timeout duration must be greater than zero; if not, timeout of 1 min will be used.
-func (tf *terminationFunc) Register(timeout time.Duration, hookFunc func(ctx context.Context)) {
-	if timeout <= 0 {
-		timeout = defaultTimeout
-	}
-	tf.timeout = timeout
-	tf.hookFunc = hookFunc
-
-	tf.terminator.hooksMx.Lock()
-	defer tf.terminator.hooksMx.Unlock()
-	tf.terminator.hooks[tf.order] = append(tf.terminator.hooks[tf.order], *tf)
 }
 
 // Wait waits (with timeout) for Terminator to finish termination after the appCtx is done.
@@ -187,7 +139,7 @@ func (s *Terminator) waitShutdown(appCtx context.Context) {
 		for _, c := range s.hooks[TerminationOrder(o)] {
 			runWg.Add(1)
 
-			go func(f terminationFunc) {
+			go func(f terminationHook) {
 				defer runWg.Done()
 
 				ctx, cancel := context.WithTimeout(context.Background(), f.timeout)
