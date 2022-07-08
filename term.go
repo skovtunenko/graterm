@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 )
@@ -23,6 +24,19 @@ type terminationFunc struct {
 	componentName string
 	timeout       time.Duration
 	hookFunc      func(ctx context.Context)
+}
+
+var _ fmt.Stringer = &terminationFunc{}
+
+// String returns string representation of terminationFunc.
+func (tf *terminationFunc) String() string {
+	if tf == nil {
+		return "<nil>"
+	}
+	if strings.TrimSpace(tf.componentName) == "" {
+		return fmt.Sprintf("nameless component (order: %d)", tf.order)
+	}
+	return fmt.Sprintf("component: %q (order: %d)", tf.componentName, tf.order)
 }
 
 // Terminator is a component terminator that executes registered termination hooks in a specified order.
