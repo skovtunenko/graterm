@@ -32,6 +32,23 @@ func TestNewWithSignals(t *testing.T) {
 func TestTerminator_FluentRegister(t *testing.T) {
 	t.Parallel()
 
+	t.Run("add_only_one_hook_with_negative_timeout", func(t *testing.T) {
+		rootCtx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		terminator, ctx := NewWithSignals(rootCtx, syscall.SIGINT, syscall.SIGTERM)
+		require.NotNil(t, ctx)
+
+		terminator.WithOrder(777).Register(-1, func(_ context.Context) {}) // negative timeout
+
+		require.Equal(t, 1, len(terminator.hooks))
+		got, ok := terminator.hooks[TerminationOrder(777)]
+		require.True(t, ok)
+		require.Equal(t, 1, len(got))
+
+		require.Equal(t, time.Minute, got[0].timeout)
+	})
+
 	t.Run("add_only_one_hook", func(t *testing.T) {
 		rootCtx, cancel := context.WithCancel(context.Background())
 		defer cancel()
