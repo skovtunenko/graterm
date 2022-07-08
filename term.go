@@ -141,23 +141,6 @@ func (tf *terminationFunc) Register(timeout time.Duration, hookFunc func(ctx con
 	tf.terminator.hooks[tf.order] = append(tf.terminator.hooks[tf.order], *tf)
 }
 
-// Register registers termination hook with priority and human-readable name.
-// The lower the order the higher the execution priority, the earlier it will be executed.
-// If there are multiple hooks with the same order they will be executed in parallel.
-//
-// Deprecated: use WithOrder instead.
-func (s *Terminator) Register(order TerminationOrder, componentName string, timeout time.Duration, hookFunc func(ctx context.Context)) {
-	comm := terminationFunc{
-		componentName: componentName,
-		timeout:       timeout,
-		hookFunc:      hookFunc,
-	}
-
-	s.hooksMx.Lock()
-	defer s.hooksMx.Unlock()
-	s.hooks[order] = append(s.hooks[order], comm)
-}
-
 // Wait waits (with timeout) for Terminator to finish termination after the appCtx is done.
 func (s *Terminator) Wait(appCtx context.Context, timeout time.Duration) error {
 	{
