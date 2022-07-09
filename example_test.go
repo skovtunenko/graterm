@@ -70,10 +70,9 @@ func ExampleTerminator_WithOrder() {
 				log.Println("terminating HOOK#3...")
 				defer log.Println("...HOOK#3 terminated")
 
-				sleepTime := 3 * time.Second
-				t := time.NewTimer(sleepTime)
+				const sleepTime = 3 * time.Second
 				select {
-				case <-t.C:
+				case <-time.After(sleepTime):
 					log.Printf("HOOK#3 sleep time %v is over\n", sleepTime)
 				case <-ctx.Done():
 					log.Printf("HOOK#3 Context is Done because of: %+v\n", ctx.Err())
