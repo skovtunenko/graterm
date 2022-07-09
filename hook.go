@@ -19,7 +19,7 @@ type Order int
 
 // Hook is a registered termination hook.
 //
-// Do not create a Hook instance manually, use Terminator.WithOrder() method instead.
+// Do not create a Hook instance manually, use Terminator.WithOrder() method instead to get a Hook instance.
 type Hook struct {
 	terminator *Terminator
 
