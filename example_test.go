@@ -85,3 +85,38 @@ func ExampleTerminator_WithOrder() {
 		}
 	}
 }
+
+func ExampleHook_Register() {
+	// create new Terminator instance:
+	terminator, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+
+	// Register some hooks:
+	terminator.WithOrder(1).
+		Register(1*time.Second, func(ctx context.Context) {
+			log.Println("terminating HOOK#1...")
+			defer log.Println("...HOOK#1 terminated")
+		})
+
+	// Wait for os.Signal to occur, then terminate application with maximum timeout of 20 seconds:
+	if err := terminator.Wait(appCtx, 20*time.Second); err != nil {
+		log.Printf("graceful termination period was timed out: %+v", err)
+	}
+}
+
+func ExampleHook_WithName() {
+	// create new Terminator instance:
+	terminator, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+
+	// Register some hooks:
+	terminator.WithOrder(1).
+		WithName("HOOK#1").
+		Register(1*time.Second, func(ctx context.Context) {
+			log.Println("terminating HOOK#1...")
+			defer log.Println("...HOOK#1 terminated")
+		})
+
+	// Wait for os.Signal to occur, then terminate application with maximum timeout of 20 seconds:
+	if err := terminator.Wait(appCtx, 20*time.Second); err != nil {
+		log.Printf("graceful termination period was timed out: %+v", err)
+	}
+}
