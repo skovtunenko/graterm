@@ -7,7 +7,7 @@ import (
 
 func Test_Hook_String(t *testing.T) {
 	type fields struct {
-		tf *Hook
+		hook *Hook
 	}
 	tests := []struct {
 		name   string
@@ -17,21 +17,21 @@ func Test_Hook_String(t *testing.T) {
 		{
 			name: "nil_struct",
 			fields: fields{
-				tf: nil,
+				hook: nil,
 			},
 			want: `<nil>`,
 		},
 		{
 			name: "empty_non-nil_struct",
 			fields: fields{
-				tf: &Hook{},
+				hook: &Hook{},
 			},
 			want: `nameless component (order: 0)`,
 		},
 		{
-			name: "nameless_termination_func",
+			name: "nameless_hook",
 			fields: fields{
-				tf: &Hook{
+				hook: &Hook{
 					order: 3,
 					name:  "   ",
 				},
@@ -39,9 +39,9 @@ func Test_Hook_String(t *testing.T) {
 			want: `nameless component (order: 3)`,
 		},
 		{
-			name: "termination_function_with_a_name",
+			name: "hook_with_a_name",
 			fields: fields{
-				tf: &Hook{
+				hook: &Hook{
 					order: 777,
 					name:  "some random name",
 				},
@@ -54,7 +54,7 @@ func Test_Hook_String(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := tt.fields.tf.String()
+			got := tt.fields.hook.String()
 			require.Equal(t, tt.want, got)
 		})
 	}
