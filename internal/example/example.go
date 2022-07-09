@@ -11,6 +11,13 @@ import (
 	"time"
 )
 
+// Instructions:
+// - run the application, reach out to http://localhost:8080/
+// - terminate the application (CTRL+C)
+// - investigate the log output
+
+const hostPort = ":8080"
+
 const (
 	globalTerminationTimeout = 40 * time.Second
 
@@ -84,8 +91,6 @@ func NewServer(terminator *graterm.Terminator, logger *log.Logger) *Server {
 
 func (s *Server) Init() {
 	defer s.logger.Println("HTTP Server initialized")
-
-	const hostPort = ":8080"
 
 	httpServer := &http.Server{
 		Addr:    hostPort,
