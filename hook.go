@@ -7,16 +7,16 @@ import (
 	"time"
 )
 
-// TerminationOrder is an application components termination order.
+// Order is an application components termination order.
 //
 // Lower order - higher priority.
-type TerminationOrder int
+type Order int
 
 // terminationHook is a registered termination hook.
 type terminationHook struct {
 	terminator *Terminator
 
-	order    TerminationOrder
+	order    Order
 	name     string
 	timeout  time.Duration
 	hookFunc func(ctx context.Context)

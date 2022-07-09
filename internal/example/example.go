@@ -33,10 +33,10 @@ const (
 )
 
 const (
-	HTTPServerOrder graterm.TerminationOrder = 0
-	MessagingOrder  graterm.TerminationOrder = 1
-	FastDBOrder     graterm.TerminationOrder = 2
-	SlowDBOrder     graterm.TerminationOrder = 2
+	HTTPServerOrder graterm.Order = 0
+	MessagingOrder  graterm.Order = 1
+	FastDBOrder     graterm.Order = 2
+	SlowDBOrder     graterm.Order = 2
 )
 
 func main() {
