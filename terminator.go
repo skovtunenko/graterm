@@ -11,15 +11,10 @@ import (
 	"time"
 )
 
-const (
-	// defaultTimeout is a default timeout for a registered hook.
-	defaultTimeout = time.Minute
-)
-
 // Terminator is a component terminator that executes registered termination hooks in a specified order.
 type Terminator struct {
 	hooksMx *sync.Mutex
-	hooks   map[TerminationOrder][]terminationHook
+	hooks   map[Order][]Hook
 
 	wg *sync.WaitGroup
 
@@ -38,7 +33,7 @@ func NewWithSignals(appCtx context.Context, sig ...os.Signal) (*Terminator, cont
 	ctx, cancel := withSignals(appCtx, chSignals, sig...)
 	return &Terminator{
 		hooksMx:    &sync.Mutex{},
-		hooks:      make(map[TerminationOrder][]terminationHook),
+		hooks:      make(map[Order][]Hook),
 		wg:         &sync.WaitGroup{},
 		cancelFunc: cancel,
 		log:        noopLogger{},
@@ -81,13 +76,13 @@ func (s *Terminator) SetLogger(log Logger) {
 	s.log = log
 }
 
-// WithOrder sets the TerminationOrder for the termination hook.
+// WithOrder sets the Order for the termination hook.
 // It starts registration chain to register termination hook with priority.
 //
 // The lower the order the higher the execution priority, the earlier it will be executed.
 // If there are multiple hooks with the same order they will be executed in parallel.
-func (s *Terminator) WithOrder(order TerminationOrder) *terminationHook {
-	return &terminationHook{
+func (s *Terminator) WithOrder(order Order) *Hook {
+	return &Hook{
 		terminator: s,
 		order:      order,
 	}
@@ -136,10 +131,10 @@ func (s *Terminator) waitShutdown(appCtx context.Context) {
 
 		runWg := sync.WaitGroup{}
 
-		for _, c := range s.hooks[TerminationOrder(o)] {
+		for _, c := range s.hooks[Order(o)] {
 			runWg.Add(1)
 
-			go func(f terminationHook) {
+			go func(f Hook) {
 				defer runWg.Done()
 
 				ctx, cancel := context.WithTimeout(context.Background(), f.timeout)

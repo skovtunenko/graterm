@@ -42,7 +42,7 @@ func TestTerminator_Register(t *testing.T) {
 		terminator.WithOrder(777).Register(-1, func(_ context.Context) {}) // negative timeout
 
 		require.Equal(t, 1, len(terminator.hooks))
-		got, ok := terminator.hooks[TerminationOrder(777)]
+		got, ok := terminator.hooks[Order(777)]
 		require.True(t, ok)
 		require.Equal(t, 1, len(got))
 
@@ -61,7 +61,7 @@ func TestTerminator_Register(t *testing.T) {
 			Register(1*time.Second, func(_ context.Context) {})
 
 		require.Equal(t, 1, len(terminator.hooks))
-		got, ok := terminator.hooks[TerminationOrder(1)]
+		got, ok := terminator.hooks[Order(1)]
 		require.True(t, ok)
 		require.Equal(t, 1, len(got))
 	})
@@ -81,11 +81,11 @@ func TestTerminator_Register(t *testing.T) {
 			Register(1*time.Second, func(_ context.Context) {})
 
 		require.Equal(t, 2, len(terminator.hooks))
-		got, ok := terminator.hooks[TerminationOrder(1)]
+		got, ok := terminator.hooks[Order(1)]
 		require.True(t, ok)
 		require.Equal(t, 1, len(got))
 
-		got2, ok2 := terminator.hooks[TerminationOrder(2)]
+		got2, ok2 := terminator.hooks[Order(2)]
 		require.True(t, ok2)
 		require.Equal(t, 1, len(got2))
 	})
@@ -105,7 +105,7 @@ func TestTerminator_Register(t *testing.T) {
 			Register(1*time.Second, func(_ context.Context) {})
 
 		require.Equal(t, 1, len(terminator.hooks))
-		got, ok := terminator.hooks[TerminationOrder(1)]
+		got, ok := terminator.hooks[Order(1)]
 		require.True(t, ok)
 		require.Equal(t, 2, len(got))
 	})
