@@ -30,34 +30,34 @@ type Hook struct {
 }
 
 // WithName sets (optional) human-readable name of the registered termination hook.
-func (tf *Hook) WithName(name string) *Hook {
-	tf.name = name
-	return tf
+func (h *Hook) WithName(name string) *Hook {
+	h.name = name
+	return h
 }
 
 // Register registers termination hook that should finish execution in less than given timeout.
 // Timeout duration must be greater than zero; if not, timeout of 1 min will be used.
-func (tf *Hook) Register(timeout time.Duration, hookFunc func(ctx context.Context)) {
+func (h *Hook) Register(timeout time.Duration, hookFunc func(ctx context.Context)) {
 	if timeout <= 0 {
 		timeout = defaultTimeout
 	}
-	tf.timeout = timeout
-	tf.hookFunc = hookFunc
+	h.timeout = timeout
+	h.hookFunc = hookFunc
 
-	tf.terminator.hooksMx.Lock()
-	defer tf.terminator.hooksMx.Unlock()
-	tf.terminator.hooks[tf.order] = append(tf.terminator.hooks[tf.order], *tf)
+	h.terminator.hooksMx.Lock()
+	defer h.terminator.hooksMx.Unlock()
+	h.terminator.hooks[h.order] = append(h.terminator.hooks[h.order], *h)
 }
 
 // String returns string representation of a Hook.
-func (tf *Hook) String() string {
-	if tf == nil {
+func (h *Hook) String() string {
+	if h == nil {
 		return "<nil>"
 	}
-	if strings.TrimSpace(tf.name) == "" {
-		return fmt.Sprintf("nameless component (order: %d)", tf.order)
+	if strings.TrimSpace(h.name) == "" {
+		return fmt.Sprintf("nameless component (order: %d)", h.order)
 	}
-	return fmt.Sprintf("component: %q (order: %d)", tf.name, tf.order)
+	return fmt.Sprintf("component: %q (order: %d)", h.name, h.order)
 }
 
 var _ fmt.Stringer = &Hook{}
