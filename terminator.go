@@ -11,11 +11,6 @@ import (
 	"time"
 )
 
-const (
-	// defaultTimeout is a default timeout for a registered hook.
-	defaultTimeout = time.Minute
-)
-
 // Terminator is a component terminator that executes registered termination hooks in a specified order.
 type Terminator struct {
 	hooksMx *sync.Mutex

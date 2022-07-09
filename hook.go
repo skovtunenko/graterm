@@ -7,6 +7,11 @@ import (
 	"time"
 )
 
+const (
+	// defaultTimeout is a default timeout for a registered hook.
+	defaultTimeout = time.Minute
+)
+
 // Order is an application components termination order.
 //
 // Lower order - higher priority.
