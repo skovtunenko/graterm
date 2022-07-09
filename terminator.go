@@ -66,14 +66,14 @@ func withSignals(ctx context.Context, chSignals chan os.Signal, sig ...os.Signal
 // SetLogger sets the logger implementation.
 //
 // If log is nil, then NOOP logger implementation will be used.
-func (s *Terminator) SetLogger(log Logger) {
+func (t *Terminator) SetLogger(log Logger) {
 	if log == nil {
 		log = noopLogger{}
 	}
 
-	s.hooksMx.Lock()
-	defer s.hooksMx.Unlock()
-	s.log = log
+	t.hooksMx.Lock()
+	defer t.hooksMx.Unlock()
+	t.log = log
 }
 
 // WithOrder sets the Order for the termination hook.
@@ -81,18 +81,18 @@ func (s *Terminator) SetLogger(log Logger) {
 //
 // The lower the order the higher the execution priority, the earlier it will be executed.
 // If there are multiple hooks with the same order they will be executed in parallel.
-func (s *Terminator) WithOrder(order Order) *Hook {
+func (t *Terminator) WithOrder(order Order) *Hook {
 	return &Hook{
-		terminator: s,
+		terminator: t,
 		order:      order,
 	}
 }
 
 // Wait waits (with timeout) for Terminator to finish termination after the appCtx is done.
-func (s *Terminator) Wait(appCtx context.Context, timeout time.Duration) error {
+func (t *Terminator) Wait(appCtx context.Context, timeout time.Duration) error {
 	{
-		s.wg.Add(1)
-		go s.waitShutdown(appCtx)
+		t.wg.Add(1)
+		go t.waitShutdown(appCtx)
 	}
 
 	<-appCtx.Done()
@@ -100,7 +100,7 @@ func (s *Terminator) Wait(appCtx context.Context, timeout time.Duration) error {
 	wgChan := make(chan struct{})
 	go func() {
 		defer close(wgChan)
-		s.wg.Wait()
+		t.wg.Wait()
 	}()
 
 	select {
@@ -112,16 +112,16 @@ func (s *Terminator) Wait(appCtx context.Context, timeout time.Duration) error {
 }
 
 // waitShutdown waits for the context to be done and then sequentially notifies existing shutdown hooks.
-func (s *Terminator) waitShutdown(appCtx context.Context) {
-	defer s.wg.Done()
+func (t *Terminator) waitShutdown(appCtx context.Context) {
+	defer t.wg.Done()
 
 	<-appCtx.Done() // Block until application context is done (most likely, when the registered os.Signal will be received)
 
-	s.hooksMx.Lock()
-	defer s.hooksMx.Unlock()
+	t.hooksMx.Lock()
+	defer t.hooksMx.Unlock()
 
-	order := make([]int, 0, len(s.hooks))
-	for k := range s.hooks {
+	order := make([]int, 0, len(t.hooks))
+	for k := range t.hooks {
 		order = append(order, int(k))
 	}
 	sort.Ints(order)
@@ -131,7 +131,7 @@ func (s *Terminator) waitShutdown(appCtx context.Context) {
 
 		runWg := sync.WaitGroup{}
 
-		for _, c := range s.hooks[Order(o)] {
+		for _, c := range t.hooks[Order(o)] {
 			runWg.Add(1)
 
 			go func(f Hook) {
@@ -145,7 +145,7 @@ func (s *Terminator) waitShutdown(appCtx context.Context) {
 						defer cancel()
 
 						if err := recover(); err != nil {
-							s.log.Printf("registered hook panicked for %v, recovered: %+v", &f, err)
+							t.log.Printf("registered hook panicked for %v, recovered: %+v", &f, err)
 						}
 					}()
 
@@ -156,9 +156,9 @@ func (s *Terminator) waitShutdown(appCtx context.Context) {
 
 				switch err := ctx.Err(); {
 				case errors.Is(err, context.DeadlineExceeded):
-					s.log.Printf("registered hook timed out for %v", &f)
+					t.log.Printf("registered hook timed out for %v", &f)
 				case errors.Is(err, context.Canceled):
-					s.log.Printf("registered hook finished termination in time for %v", &f)
+					t.log.Printf("registered hook finished termination in time for %v", &f)
 				}
 			}(c)
 		}
