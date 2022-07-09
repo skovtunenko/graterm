@@ -18,6 +18,8 @@ const (
 type Order int
 
 // Hook is a registered termination hook.
+//
+// Do not create a Hook instance manually, use Terminator.WithOrder() method instead.
 type Hook struct {
 	terminator *Terminator
 
@@ -47,7 +49,7 @@ func (tf *Hook) Register(timeout time.Duration, hookFunc func(ctx context.Contex
 	tf.terminator.hooks[tf.order] = append(tf.terminator.hooks[tf.order], *tf)
 }
 
-// String returns string representation of terminationFunc.
+// String returns string representation of a Hook.
 func (tf *Hook) String() string {
 	if tf == nil {
 		return "<nil>"
