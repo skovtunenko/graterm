@@ -150,7 +150,7 @@ func (s *Terminator) waitShutdown(appCtx context.Context) {
 						defer cancel()
 
 						if err := recover(); err != nil {
-							s.log.Printf("registered hook panicked for %v, recovered: %+v", f, err)
+							s.log.Printf("registered hook panicked for %v, recovered: %+v", &f, err)
 						}
 					}()
 
@@ -161,9 +161,9 @@ func (s *Terminator) waitShutdown(appCtx context.Context) {
 
 				switch err := ctx.Err(); {
 				case errors.Is(err, context.DeadlineExceeded):
-					s.log.Printf("registered hook timed out for %v", f)
+					s.log.Printf("registered hook timed out for %v", &f)
 				case errors.Is(err, context.Canceled):
-					s.log.Printf("registered hook finished termination in time for %v", f)
+					s.log.Printf("registered hook finished termination in time for %v", &f)
 				}
 			}(c)
 		}
