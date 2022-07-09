@@ -22,19 +22,6 @@ type terminationHook struct {
 	hookFunc func(ctx context.Context)
 }
 
-var _ fmt.Stringer = &terminationHook{}
-
-// String returns string representation of terminationFunc.
-func (tf *terminationHook) String() string {
-	if tf == nil {
-		return "<nil>"
-	}
-	if strings.TrimSpace(tf.name) == "" {
-		return fmt.Sprintf("nameless component (order: %d)", tf.order)
-	}
-	return fmt.Sprintf("component: %q (order: %d)", tf.name, tf.order)
-}
-
 // WithName sets (optional) human-readable name of the registered termination hook.
 func (tf *terminationHook) WithName(name string) *terminationHook {
 	tf.name = name
@@ -54,3 +41,16 @@ func (tf *terminationHook) Register(timeout time.Duration, hookFunc func(ctx con
 	defer tf.terminator.hooksMx.Unlock()
 	tf.terminator.hooks[tf.order] = append(tf.terminator.hooks[tf.order], *tf)
 }
+
+// String returns string representation of terminationFunc.
+func (tf *terminationHook) String() string {
+	if tf == nil {
+		return "<nil>"
+	}
+	if strings.TrimSpace(tf.name) == "" {
+		return fmt.Sprintf("nameless component (order: %d)", tf.order)
+	}
+	return fmt.Sprintf("component: %q (order: %d)", tf.name, tf.order)
+}
+
+var _ fmt.Stringer = &terminationHook{}
