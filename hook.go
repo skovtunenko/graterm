@@ -21,12 +21,12 @@ type Order int
 //
 // Do not create a Hook instance manually, use Terminator.WithOrder() method instead to get a Hook instance.
 type Hook struct {
-	terminator *Terminator
+	terminator *Terminator // terminator is a pointer to Terminator instance that holds registered Hooks.
 
-	order    Order
-	name     string
-	timeout  time.Duration
-	hookFunc func(ctx context.Context)
+	order    Order                     // order is Hook order.
+	name     string                    // name is an optional component name for pretty-printing in logs.
+	timeout  time.Duration             // timeout is max hookFunc execution timeout.
+	hookFunc func(ctx context.Context) // hookFunc is a user-defined termination hook function.
 }
 
 // WithName sets (optional) human-readable name of the registered termination hook.
