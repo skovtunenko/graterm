@@ -79,7 +79,7 @@ func ExampleTerminator_WithOrder() {
 				}
 			})
 
-		// Wait for os.Signal to occur, then terminate application with maximum timeout of 40 seconds:
+		// Wait for os.Signal to occur, then terminate application with maximum timeout of 20 seconds:
 		if err := terminator.Wait(appCtx, 20*time.Second); err != nil {
 			log.Printf("graceful termination period was timed out: %+v", err)
 		}
