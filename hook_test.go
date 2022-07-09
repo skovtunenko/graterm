@@ -7,7 +7,7 @@ import (
 
 func Test_terminationFunc_String(t *testing.T) {
 	type fields struct {
-		tf *terminationHook
+		tf *Hook
 	}
 	tests := []struct {
 		name   string
@@ -24,14 +24,14 @@ func Test_terminationFunc_String(t *testing.T) {
 		{
 			name: "empty_non-nil_struct",
 			fields: fields{
-				tf: &terminationHook{},
+				tf: &Hook{},
 			},
 			want: `nameless component (order: 0)`,
 		},
 		{
 			name: "nameless_termination_func",
 			fields: fields{
-				tf: &terminationHook{
+				tf: &Hook{
 					order: 3,
 					name:  "   ",
 				},
@@ -41,7 +41,7 @@ func Test_terminationFunc_String(t *testing.T) {
 		{
 			name: "termination_function_with_a_name",
 			fields: fields{
-				tf: &terminationHook{
+				tf: &Hook{
 					order: 777,
 					name:  "some random name",
 				},

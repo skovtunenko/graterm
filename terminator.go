@@ -19,7 +19,7 @@ const (
 // Terminator is a component terminator that executes registered termination hooks in a specified order.
 type Terminator struct {
 	hooksMx *sync.Mutex
-	hooks   map[Order][]terminationHook
+	hooks   map[Order][]Hook
 
 	wg *sync.WaitGroup
 
@@ -38,7 +38,7 @@ func NewWithSignals(appCtx context.Context, sig ...os.Signal) (*Terminator, cont
 	ctx, cancel := withSignals(appCtx, chSignals, sig...)
 	return &Terminator{
 		hooksMx:    &sync.Mutex{},
-		hooks:      make(map[Order][]terminationHook),
+		hooks:      make(map[Order][]Hook),
 		wg:         &sync.WaitGroup{},
 		cancelFunc: cancel,
 		log:        noopLogger{},
@@ -86,8 +86,8 @@ func (s *Terminator) SetLogger(log Logger) {
 //
 // The lower the order the higher the execution priority, the earlier it will be executed.
 // If there are multiple hooks with the same order they will be executed in parallel.
-func (s *Terminator) WithOrder(order Order) *terminationHook {
-	return &terminationHook{
+func (s *Terminator) WithOrder(order Order) *Hook {
+	return &Hook{
 		terminator: s,
 		order:      order,
 	}
@@ -139,7 +139,7 @@ func (s *Terminator) waitShutdown(appCtx context.Context) {
 		for _, c := range s.hooks[Order(o)] {
 			runWg.Add(1)
 
-			go func(f terminationHook) {
+			go func(f Hook) {
 				defer runWg.Done()
 
 				ctx, cancel := context.WithTimeout(context.Background(), f.timeout)

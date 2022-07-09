@@ -12,8 +12,8 @@ import (
 // Lower order - higher priority.
 type Order int
 
-// terminationHook is a registered termination hook.
-type terminationHook struct {
+// Hook is a registered termination hook.
+type Hook struct {
 	terminator *Terminator
 
 	order    Order
@@ -23,14 +23,14 @@ type terminationHook struct {
 }
 
 // WithName sets (optional) human-readable name of the registered termination hook.
-func (tf *terminationHook) WithName(name string) *terminationHook {
+func (tf *Hook) WithName(name string) *Hook {
 	tf.name = name
 	return tf
 }
 
 // Register registers termination hook that should finish execution in less than given timeout.
 // Timeout duration must be greater than zero; if not, timeout of 1 min will be used.
-func (tf *terminationHook) Register(timeout time.Duration, hookFunc func(ctx context.Context)) {
+func (tf *Hook) Register(timeout time.Duration, hookFunc func(ctx context.Context)) {
 	if timeout <= 0 {
 		timeout = defaultTimeout
 	}
@@ -43,7 +43,7 @@ func (tf *terminationHook) Register(timeout time.Duration, hookFunc func(ctx con
 }
 
 // String returns string representation of terminationFunc.
-func (tf *terminationHook) String() string {
+func (tf *Hook) String() string {
 	if tf == nil {
 		return "<nil>"
 	}
@@ -53,4 +53,4 @@ func (tf *terminationHook) String() string {
 	return fmt.Sprintf("component: %q (order: %d)", tf.name, tf.order)
 }
 
-var _ fmt.Stringer = &terminationHook{}
+var _ fmt.Stringer = &Hook{}
