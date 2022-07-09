@@ -29,7 +29,7 @@ func Test_Hook_String(t *testing.T) {
 			want: `nameless component (order: 0)`,
 		},
 		{
-			name: "nameless_termination_func",
+			name: "nameless_hook",
 			fields: fields{
 				hook: &Hook{
 					order: 3,
@@ -39,7 +39,7 @@ func Test_Hook_String(t *testing.T) {
 			want: `nameless component (order: 3)`,
 		},
 		{
-			name: "termination_function_with_a_name",
+			name: "hook_with_a_name",
 			fields: fields{
 				hook: &Hook{
 					order: 777,
