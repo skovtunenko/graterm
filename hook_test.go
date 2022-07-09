@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func Test_terminationFunc_String(t *testing.T) {
+func Test_Hook_String(t *testing.T) {
 	type fields struct {
 		tf *Hook
 	}
