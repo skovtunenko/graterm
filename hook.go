@@ -13,6 +13,7 @@ const (
 )
 
 // Order is an application components termination order.
+// Termination hooks registered with the same order will be executed concurrently.
 //
 // Lower order - higher priority.
 type Order int
