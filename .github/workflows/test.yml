@@ -20,6 +20,6 @@ jobs:
         run: go test -json ./... > test.json
       - name: Annotate tests
         if: always()
-        uses: guyarb/golang-test-annotations@v0.3.0
+        uses: guyarb/golang-test-annotations@v0.6.0
         with:
           test-results: test.json
