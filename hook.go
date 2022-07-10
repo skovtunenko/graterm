@@ -8,19 +8,19 @@ import (
 )
 
 const (
-	// defaultTimeout is a default timeout for a registered hook.
+	// defaultTimeout is a default timeout for a registered Hook.
 	defaultTimeout = time.Minute
 )
 
 // Order is an application components termination order.
-// Termination hooks registered with the same order will be executed concurrently.
+// Termination [Hook]s registered with the same order will be executed concurrently.
 //
 // Lower order - higher priority.
 type Order int
 
 // Hook is a registered termination hook.
 //
-// Do not create a Hook instance manually, use Terminator.WithOrder() method instead to get a Hook instance.
+// Do not create a Hook instance manually, use [Terminator.WithOrder()] method instead to get a [Hook] instance.
 type Hook struct {
 	terminator *Terminator // terminator is a pointer to Terminator instance that holds registered Hooks.
 
@@ -30,13 +30,13 @@ type Hook struct {
 	hookFunc func(ctx context.Context) // hookFunc is a user-defined termination hook function.
 }
 
-// WithName sets (optional) human-readable name of the registered termination hook.
+// WithName sets (optional) human-readable name of the registered termination [Hook].
 func (h *Hook) WithName(name string) *Hook {
 	h.name = name
 	return h
 }
 
-// Register registers termination hook that should finish execution in less than given timeout.
+// Register registers termination [Hook] that should finish execution in less than given timeout.
 //
 // Timeout duration must be greater than zero; if not, timeout of 1 min will be used.
 func (h *Hook) Register(timeout time.Duration, hookFunc func(ctx context.Context)) {
@@ -51,7 +51,7 @@ func (h *Hook) Register(timeout time.Duration, hookFunc func(ctx context.Context
 	h.terminator.hooks[h.order] = append(h.terminator.hooks[h.order], *h)
 }
 
-// String returns string representation of a Hook.
+// String returns string representation of a [Hook].
 func (h *Hook) String() string {
 	if h == nil {
 		return "<nil>"

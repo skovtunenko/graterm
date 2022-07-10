@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-// Terminator is a component terminator that executes registered termination hooks in a specified order.
+// Terminator is a component terminator that executes registered termination [Hook]s in a specified order.
 type Terminator struct {
 	hooksMx *sync.Mutex
 	hooks   map[Order][]Hook
@@ -63,7 +63,7 @@ func withSignals(ctx context.Context, chSignals chan os.Signal, sig ...os.Signal
 	return ctx, cancel
 }
 
-// SetLogger sets the logger implementation.
+// SetLogger sets the Logger implementation.
 //
 // If log is nil, then NOOP logger implementation will be used.
 func (t *Terminator) SetLogger(log Logger) {
@@ -79,8 +79,8 @@ func (t *Terminator) SetLogger(log Logger) {
 // WithOrder sets the Order for the termination hook.
 // It starts registration chain to register termination hook with priority.
 //
-// The lower the order the higher the execution priority, the earlier it will be executed.
-// If there are multiple hooks with the same order they will be executed in parallel.
+// The lower the Order the higher the execution priority, the earlier it will be executed.
+// If there are multiple hooks with the same Order they will be executed in parallel.
 func (t *Terminator) WithOrder(order Order) *Hook {
 	return &Hook{
 		terminator: t,
