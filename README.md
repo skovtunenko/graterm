@@ -82,34 +82,50 @@ Integration with HTTP server
 The library doesn't have out of the box support to start/terminate the HTTP server, but that's easy to handle:
 
 ```go
-terminator, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+package main
 
-// .....................
+import (
+	"context"
+	"errors"
+	"fmt"
+	"log"
+	"net/http"
+	"syscall"
+	"time"
+	
+	"github.com/skovtunenko/graterm"
+)
 
-httpServer := &http.Server{
-    Addr:    hostPort,
-    Handler: http.DefaultServeMux,
-}
-http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-    fmt.Fprintf(w, "hello, world!")
-})
+func main() {
+	terminator, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 
-go func() {
-    if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-        log.Printf("terminated HTTP Server: %+v\n", err)
-    }
-}()
+	// .....................
 
-terminator.WithOrder(HTTPServerOrder).
-    WithName("HTTPServer").
-    Register(httpServerTerminationTimeout, func(ctx context.Context) {
-        if err := httpServer.Shutdown(ctx); err != nil { 
-            log.Printf("shutdown HTTP Server: %+v\n", err)
-        }
-    })
+	httpServer := &http.Server{
+		Addr:    ":8080",
+		Handler: http.DefaultServeMux,
+	}
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "hello, world!")
+	})
 
-if err := terminator.Wait(appCtx, globalTerminationTimeout); err != nil {
-    log.Printf("graceful termination period is timed out: %+v\n", err)
+	go func() { 
+		if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Printf("terminated HTTP Server: %+v\n", err)
+		}
+	}()
+
+	terminator.WithOrder(1).
+		WithName("HTTPServer").
+		Register(10*time.Second, func(ctx context.Context) {
+			if err := httpServer.Shutdown(ctx); err != nil {
+				log.Printf("shutdown HTTP Server: %+v\n", err)
+			}
+		})
+
+	if err := terminator.Wait(appCtx, 30*time.Second); err != nil {
+		log.Printf("graceful termination period is timed out: %+v\n", err)
+	}
 }
 ```
 
