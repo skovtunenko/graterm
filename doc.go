@@ -19,25 +19,17 @@
 // 				defer log.Println("...HOOK#1 terminated")
 // 			})
 //
-// 		terminator.WithOrder(1).
-// 			WithName("HOOK#2").
+// 		terminator.WithOrder(2).
 // 			Register(1*time.Second, func(ctx context.Context) {
 // 				log.Println("terminating HOOK#2...")
 // 				defer log.Println("...HOOK#2 terminated")
-// 			})
-//
-// 		terminator.WithOrder(2).
-// 			WithName("HOOK#3").
-// 			Register(1*time.Second, func(ctx context.Context) {
-// 				log.Println("terminating HOOK#3...")
-// 				defer log.Println("...HOOK#3 terminated")
 //
 // 				const sleepTime = 3 * time.Second
 // 				select {
 // 				case <-time.After(sleepTime):
-// 					log.Printf("HOOK#3 sleep time %v is over\n", sleepTime)
+// 					log.Printf("HOOK#2 sleep time %v is over\n", sleepTime)
 // 				case <-ctx.Done():
-// 					log.Printf("HOOK#3 Context is Done because of: %+v\n", ctx.Err())
+// 					log.Printf("HOOK#2 Context is Done because of: %+v\n", ctx.Err())
 // 				}
 // 			})
 //
@@ -75,6 +67,8 @@
 // 					log.Printf("shutdown HTTP Server: %+v\n", err)
 // 				}
 // 			})
+//
+//		// .......
 //
 // 		if err := terminator.Wait(appCtx, 30*time.Second); err != nil {
 // 			log.Printf("graceful termination period is timed out: %+v\n", err)
