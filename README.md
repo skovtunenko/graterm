@@ -1,10 +1,10 @@
 # graterm
 
-![Lint](https://github.com/skovtunenko/graterm/actions/workflows/golangci-lint.yml/badge.svg?branch=master)
-![Tests](https://github.com/skovtunenko/graterm/actions/workflows/test.yml/badge.svg?branch=master)
-[![codecov](https://codecov.io/gh/skovtunenko/graterm/branch/master/graph/badge.svg)](https://codecov.io/gh/skovtunenko/graterm)
+![Lint](https://github.com/skovtunenko/graterm/actions/workflows/golangci-lint.yml/badge.svg?branch=main)
+![Tests](https://github.com/skovtunenko/graterm/actions/workflows/test.yml/badge.svg?branch=main)
+[![codecov](https://codecov.io/gh/skovtunenko/graterm/branch/main/graph/badge.svg)](https://codecov.io/gh/skovtunenko/graterm)
 [![Go Report Card](https://goreportcard.com/badge/github.com/skovtunenko/graterm)](https://goreportcard.com/report/github.com/skovtunenko/graterm)
-[![License](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/skovtunenko/graterm/blob/master/LICENSE)
+[![License](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/skovtunenko/graterm/blob/main/LICENSE)
 [![GoDoc](https://godoc.org/github.com/skovtunenko/graterm?status.svg)](https://godoc.org/github.com/skovtunenko/graterm)
 [![Release](https://img.shields.io/github/release/skovtunenko/graterm.svg?style=flat-square)](https://github.com/skovtunenko/graterm/releases/latest)
 
