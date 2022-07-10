@@ -27,19 +27,19 @@ Each public function has example attached to it. Here is the simple one:
 package main
 
 import (
-	"context"
-	"log"
-	"syscall"
-	"time"
-	
-	"github.com/skovtunenko/graterm"
+    "context"
+    "log"
+    "syscall"
+    "time"
+
+    "github.com/skovtunenko/graterm"
 )
 
 func main() {
-	// create new Terminator instance:
-	terminator, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+    // create new Terminator instance:
+    terminator, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 
-	// Register some hooks:
+    // Register some hooks:
     terminator.WithOrder(1).
         WithName("HOOK#1").
         Register(1*time.Second, func(ctx context.Context) {
@@ -85,47 +85,47 @@ The library doesn't have out of the box support to start/terminate the HTTP serv
 package main
 
 import (
-	"context"
-	"errors"
-	"fmt"
-	"log"
-	"net/http"
-	"syscall"
-	"time"
-	
-	"github.com/skovtunenko/graterm"
+    "context"
+    "errors"
+    "fmt"
+    "log"
+    "net/http"
+    "syscall"
+    "time"
+
+    "github.com/skovtunenko/graterm"
 )
 
 func main() {
-	terminator, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+    terminator, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 
-	// .....................
+    // .....................
 
-	httpServer := &http.Server{
-		Addr:    ":8080",
-		Handler: http.DefaultServeMux,
-	}
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "hello, world!")
-	})
+    httpServer := &http.Server{
+        Addr:    ":8080",
+        Handler: http.DefaultServeMux,
+    }
+    http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+        fmt.Fprintf(w, "hello, world!")
+    })
 
-	go func() { 
-		if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Printf("terminated HTTP Server: %+v\n", err)
-		}
-	}()
+    go func() { 
+        if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+            log.Printf("terminated HTTP Server: %+v\n", err)
+        }
+    }()
 
-	terminator.WithOrder(1).
-		WithName("HTTPServer").
-		Register(10*time.Second, func(ctx context.Context) {
-			if err := httpServer.Shutdown(ctx); err != nil {
-				log.Printf("shutdown HTTP Server: %+v\n", err)
-			}
-		})
+    terminator.WithOrder(1).
+        WithName("HTTPServer").
+        Register(10*time.Second, func(ctx context.Context) {
+            if err := httpServer.Shutdown(ctx); err != nil {
+                log.Printf("shutdown HTTP Server: %+v\n", err)
+            }
+        })
 
-	if err := terminator.Wait(appCtx, 30*time.Second); err != nil {
-		log.Printf("graceful termination period is timed out: %+v\n", err)
-	}
+    if err := terminator.Wait(appCtx, 30*time.Second); err != nil {
+        log.Printf("graceful termination period is timed out: %+v\n", err)
+    }
 }
 ```
 
@@ -149,5 +149,7 @@ MIT
 
 AUTHORS
 -----------
+
 Sergiy Kovtunenko <@skovtunenko>
+
 Oleksandr Halushchak <ohalushchak@exadel.com>

@@ -25,7 +25,7 @@ type Terminator struct {
 
 // NewWithSignals creates a new instance of component Terminator.
 //
-// Example of useful signals might be: syscall.SIGINT, syscall.SIGTERM.
+// Example of useful signals might be: [syscall.SIGINT], [syscall.SIGTERM].
 //
 // Note: this method will start internal monitoring goroutine.
 func NewWithSignals(appCtx context.Context, sig ...os.Signal) (*Terminator, context.Context) {
