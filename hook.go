@@ -13,6 +13,7 @@ const (
 )
 
 // Order is an application components termination order.
+// Termination hooks registered with the same order will be executed concurrently.
 //
 // Lower order - higher priority.
 type Order int
@@ -36,6 +37,7 @@ func (h *Hook) WithName(name string) *Hook {
 }
 
 // Register registers termination hook that should finish execution in less than given timeout.
+//
 // Timeout duration must be greater than zero; if not, timeout of 1 min will be used.
 func (h *Hook) Register(timeout time.Duration, hookFunc func(ctx context.Context)) {
 	if timeout <= 0 {
