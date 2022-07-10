@@ -2,8 +2,8 @@ package graterm
 
 // Logger specifies the interface for internal Terminator log operations.
 //
-// By default, graterm library will not log anything.
-// To set the logger, use Terminator.SetLogger() method.
+// By default, library will not log anything.
+// To set the logger, use [Terminator.SetLogger()] method.
 type Logger interface {
 	Printf(format string, v ...interface{})
 }
