@@ -94,7 +94,7 @@ func ExampleTerminator_WithOrder() {
 }
 
 func ExampleHook_Register() {
-	// Define Orders:
+	// Define Order:
 	const (
 		HTTPServerTerminationOrder graterm.Order = 1
 	)
@@ -116,7 +116,7 @@ func ExampleHook_Register() {
 }
 
 func ExampleHook_WithName() {
-	// Define Orders:
+	// Define Order:
 	const (
 		HTTPServerTerminationOrder graterm.Order = 1
 	)
