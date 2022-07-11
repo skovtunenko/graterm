@@ -140,12 +140,17 @@ func (t *Terminator) waitShutdown(appCtx context.Context) {
 				ctx, cancel := context.WithTimeout(context.Background(), f.timeout)
 				defer cancel()
 
+				var execDuration time.Duration
+
 				go func() {
+					currentTime := time.Now()
+
 					defer func() {
 						defer cancel()
 
+						execDuration = time.Since(currentTime)
 						if err := recover(); err != nil {
-							t.log.Printf("registered hook panicked for %v, recovered: %+v", &f, err)
+							t.log.Printf("registered hook panicked after %v for %v, recovered: %+v", execDuration, &f, err)
 						}
 					}()
 
@@ -156,9 +161,9 @@ func (t *Terminator) waitShutdown(appCtx context.Context) {
 
 				switch err := ctx.Err(); {
 				case errors.Is(err, context.DeadlineExceeded):
-					t.log.Printf("registered hook timed out for %v", &f)
+					t.log.Printf("registered hook timed out after %v for %v", f.timeout, &f)
 				case errors.Is(err, context.Canceled):
-					t.log.Printf("registered hook finished termination in time for %v", &f)
+					t.log.Printf("registered hook finished termination in %v (out of maximum %v) for %v", execDuration, f.timeout, &f)
 				}
 			}(c)
 		}
