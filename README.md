@@ -12,12 +12,71 @@ Provides primitives to perform ordered **GRA**ceful **TERM**ination (aka shutdow
 
 # Description
 
-Library provides fluent methods to register ordered application termination (aka shutdown) hooks,
-and block the main goroutine until the registered os.Signal will occur. 
+Library provides fluent methods to register ordered application termination (aka shutdown) [hooks](https://pkg.go.dev/github.com/skovtunenko/graterm#Hook),
+and block the main goroutine until the registered `os.Signal` will occur. 
 
-Termination hooks registered with the same order will be executed concurrently.
+Termination [hooks](https://pkg.go.dev/github.com/skovtunenko/graterm#Hook) registered with the 
+same [Order](https://pkg.go.dev/github.com/skovtunenko/graterm#Order) will be executed concurrently.
 
-It is possible to set individual timeouts for each registered termination hook and global termination timeout for the whole application.
+It is possible to set individual timeouts for each registered termination [hook](https://pkg.go.dev/github.com/skovtunenko/graterm#Hook) 
+and global termination timeout for the whole application.
+
+# Usage
+
+Get the library:
+```bash
+go get -u github.com/skovtunenko/graterm
+```
+
+Import the library into the project:
+```go
+import (
+    "github.com/skovtunenko/graterm"
+)
+```
+
+Create a new instance of [Terminator](https://pkg.go.dev/github.com/skovtunenko/graterm#Terminator) and get an application context 
+that will be cancelled when one of the registered `os.Signal`s will occur:
+```go
+// create new Terminator instance:
+terminator, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+terminator.SetLogger(log.Default()) // Optionally set the custom logger implementation instead of default NOOP one
+```
+
+Optionally define [Order](https://pkg.go.dev/github.com/skovtunenko/graterm#Order) of components to be terminated at the end:
+```go
+const (
+    HTTPServerTerminationOrder graterm.Order = 1
+    MessagingTerminationOrder  graterm.Order = 1
+    DBTerminationOrder         graterm.Order = 2
+	// ..........
+)
+```
+
+Register some termination [Hooks](https://pkg.go.dev/github.com/skovtunenko/graterm#Hook) with priorities:
+```go
+terminator.WithOrder(HTTPServerTerminationOrder).
+    WithName("HTTP Server").
+    Register(1*time.Second, func(ctx context.Context) {
+        if err := httpServer.Shutdown(ctx); err != nil {
+            log.Printf("shutdown HTTP Server: %+v\n", err)
+        }
+    })
+```
+
+Block main goroutine until the application receives one of the registered `os.Signal`s:
+```go
+if err := terminator.Wait(appCtx, 20*time.Second); err != nil {
+    log.Printf("graceful termination period was timed out: %+v", err)
+}
+```
+
+# Features
+
+* dependency only on a standard Go library
+* Component-agnostic (can be adapted to any 3rd party technology)
+* 100% test coverage, including goroutine leak tests
+* Rich set of examples
 
 # Example
 
@@ -143,7 +202,7 @@ func main() {
 }
 ```
 
-The full-fledged example located here: https://github.com/skovtunenko/graterm/blob/main/internal/example/example.go
+The full-fledged example located here: [example.go](https://github.com/skovtunenko/graterm/blob/main/internal/example/example.go)
 
 Testing
 -----------
