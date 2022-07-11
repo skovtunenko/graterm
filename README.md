@@ -110,8 +110,7 @@ func main() {
 
     terminator, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 
-    // .....................
-
+    // Create an HTTP Server and add one simple handler into it:
     httpServer := &http.Server{
         Addr:    ":8080",
         Handler: http.DefaultServeMux,
@@ -120,12 +119,14 @@ func main() {
         fmt.Fprintf(w, "hello, world!")
     })
 
+    // Start HTTP server in a separate goroutine:
     go func() { 
         if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
             log.Printf("terminated HTTP Server: %+v\n", err)
         }
     }()
 
+    // Register HTTP Server termination hook:
     terminator.WithOrder(HTTPServerTerminationOrder).
         WithName("HTTPServer").
         Register(10*time.Second, func(ctx context.Context) {
@@ -134,6 +135,7 @@ func main() {
             }
         })
 
+    // Wait for os.Signal to occur, then terminate application with maximum timeout of 30 seconds:
     if err := terminator.Wait(appCtx, 30*time.Second); err != nil {
         log.Printf("graceful termination period is timed out: %+v\n", err)
     }
