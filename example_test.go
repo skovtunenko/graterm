@@ -2,10 +2,11 @@ package graterm_test
 
 import (
 	"context"
-	"github.com/skovtunenko/graterm"
 	"log"
 	"syscall"
 	"time"
+
+	"github.com/skovtunenko/graterm"
 )
 
 func ExampleNewWithSignals() {
@@ -45,37 +46,44 @@ func ExampleTerminator_Wait() {
 }
 
 func ExampleTerminator_WithOrder() {
+	// Define Orders:
+	const (
+		HTTPServerTerminationOrder graterm.Order = 1
+		MessagingTerminationOrder  graterm.Order = 1
+		DBTerminationOrder         graterm.Order = 2
+	)
+
 	// create new Terminator instance:
 	terminator, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 
 	// Register some hooks:
 	{
-		terminator.WithOrder(1).
-			WithName("HOOK#1").
+		terminator.WithOrder(HTTPServerTerminationOrder).
+			WithName("HTTP Server").
 			Register(1*time.Second, func(ctx context.Context) {
-				log.Println("terminating HOOK#1...")
-				defer log.Println("...HOOK#1 terminated")
+				log.Println("terminating HTTP Server...")
+				defer log.Println("...HTTP Server terminated")
 			})
 
-		terminator.WithOrder(1).
-			WithName("HOOK#2").
+		terminator.WithOrder(MessagingTerminationOrder).
+			WithName("Messaging").
 			Register(1*time.Second, func(ctx context.Context) {
-				log.Println("terminating HOOK#2...")
-				defer log.Println("...HOOK#2 terminated")
+				log.Println("terminating Messaging...")
+				defer log.Println("...Messaging terminated")
 			})
 
-		terminator.WithOrder(2).
-			WithName("HOOK#3").
+		terminator.WithOrder(DBTerminationOrder).
+			WithName("DB").
 			Register(1*time.Second, func(ctx context.Context) {
-				log.Println("terminating HOOK#3...")
-				defer log.Println("...HOOK#3 terminated")
+				log.Println("terminating DB...")
+				defer log.Println("...DB terminated")
 
 				const sleepTime = 3 * time.Second
 				select {
 				case <-time.After(sleepTime):
-					log.Printf("HOOK#3 sleep time %v is over\n", sleepTime)
+					log.Printf("DB termination sleep time %v is over\n", sleepTime)
 				case <-ctx.Done():
-					log.Printf("HOOK#3 Context is Done because of: %+v\n", ctx.Err())
+					log.Printf("DB termination Context is Done because of: %+v\n", ctx.Err())
 				}
 			})
 
@@ -87,14 +95,19 @@ func ExampleTerminator_WithOrder() {
 }
 
 func ExampleHook_Register() {
+	// Define Orders:
+	const (
+		HTTPServerTerminationOrder graterm.Order = 1
+	)
+
 	// create new Terminator instance:
 	terminator, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 
 	// Register some hooks:
-	terminator.WithOrder(1).
+	terminator.WithOrder(HTTPServerTerminationOrder).
 		Register(1*time.Second, func(ctx context.Context) {
-			log.Println("terminating HOOK#1...")
-			defer log.Println("...HOOK#1 terminated")
+			log.Println("terminating HTTP Server...")
+			defer log.Println("...HTTP Server terminated")
 		})
 
 	// Wait for os.Signal to occur, then terminate application with maximum timeout of 20 seconds:
@@ -104,15 +117,20 @@ func ExampleHook_Register() {
 }
 
 func ExampleHook_WithName() {
+	// Define Orders:
+	const (
+		HTTPServerTerminationOrder graterm.Order = 1
+	)
+
 	// create new Terminator instance:
 	terminator, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 
 	// Register some hooks:
-	terminator.WithOrder(1).
-		WithName("HOOK#1").
+	terminator.WithOrder(HTTPServerTerminationOrder).
+		WithName("HTTP Server"). // Define (optional) Hook name
 		Register(1*time.Second, func(ctx context.Context) {
-			log.Println("terminating HOOK#1...")
-			defer log.Println("...HOOK#1 terminated")
+			log.Println("terminating HTTP Server...")
+			defer log.Println("...HTTP Server terminated")
 		})
 
 	// Wait for os.Signal to occur, then terminate application with maximum timeout of 20 seconds:
