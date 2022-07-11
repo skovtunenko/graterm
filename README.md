@@ -105,6 +105,9 @@ import (
 )
 
 func main() {
+    // Define Order for HTTP Server termination:
+    const HTTPServerTerminationOrder graterm.Order = 1
+
     terminator, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 
     // .....................
@@ -123,7 +126,7 @@ func main() {
         }
     }()
 
-    terminator.WithOrder(1).
+    terminator.WithOrder(HTTPServerTerminationOrder).
         WithName("HTTPServer").
         Register(10*time.Second, func(ctx context.Context) {
             if err := httpServer.Shutdown(ctx); err != nil {
