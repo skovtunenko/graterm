@@ -163,6 +163,8 @@ func (d *FastDB) Init() {
 		Register(fastDBTerminationTimeout, func(ctx context.Context) {
 			d.logger.Println("terminating FastDB component...")
 			defer d.logger.Println("...FastDB component terminated")
+
+			panic(errors.New("BOOM!"))
 		})
 }
 
