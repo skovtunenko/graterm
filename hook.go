@@ -13,14 +13,14 @@ const (
 )
 
 // Order is an application components termination order.
-// Termination [Hook]s registered with the same order will be executed concurrently.
+// Termination Hooks registered with the same order will be executed concurrently.
 //
 // Lower order - higher priority.
 type Order int
 
 // Hook is a registered termination hook.
 //
-// Do not create a Hook instance manually, use [Terminator.WithOrder()] method instead to get a [Hook] instance.
+// Do not create a Hook instance manually, use Terminator.WithOrder() method instead to get a Hook instance.
 type Hook struct {
 	terminator *Terminator // terminator is a pointer to Terminator instance that holds registered Hooks.
 

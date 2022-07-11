@@ -36,43 +36,51 @@ import (
 )
 
 func main() {
-    // create new Terminator instance:
-    terminator, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	// Define Orders:
+	const (
+		HTTPServerTerminationOrder graterm.Order = 1
+		MessagingTerminationOrder  graterm.Order = 1
+		DBTerminationOrder         graterm.Order = 2
+	)
 
-    // Register some hooks:
-    terminator.WithOrder(1).
-        WithName("HOOK#1").
-        Register(1*time.Second, func(ctx context.Context) {
-            log.Println("terminating HOOK#1...")
-            defer log.Println("...HOOK#1 terminated")
-        })
+	// create new Terminator instance:
+	terminator, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 
-    terminator.WithOrder(1).
-        WithName("HOOK#2").
-        Register(1*time.Second, func(ctx context.Context) {
-            log.Println("terminating HOOK#2...")
-            defer log.Println("...HOOK#2 terminated")
-        })
+	// Register HTTP Server termination hook:
+	terminator.WithOrder(HTTPServerTerminationOrder).
+		WithName("HTTP Server").
+		Register(1*time.Second, func(ctx context.Context) {
+			log.Println("terminating HTTP Server...")
+			defer log.Println("...HTTP Server terminated")
+		})
 
-    terminator.WithOrder(2).
-        WithName("HOOK#3").
-        Register(1*time.Second, func(ctx context.Context) {
-            log.Println("terminating HOOK#3...")
-            defer log.Println("...HOOK#3 terminated")
+	// Register nameless Messaging termination hook:
+	terminator.WithOrder(MessagingTerminationOrder).
+		Register(1*time.Second, func(ctx context.Context) {
+			log.Println("terminating Messaging...")
+			defer log.Println("...Messaging terminated")
+		})
 
-            const sleepTime = 3 * time.Second
-            select {
-            case <-time.After(sleepTime):
-                log.Printf("HOOK#3 sleep time %v is over\n", sleepTime)
-            case <-ctx.Done():
-                log.Printf("HOOK#3 Context is Done because of: %+v\n", ctx.Err())
-            }
-        })
+	// Register Database termination hook:
+	terminator.WithOrder(DBTerminationOrder).
+		WithName("DB").
+		Register(1*time.Second, func(ctx context.Context) {
+			log.Println("terminating DB...")
+			defer log.Println("...DB terminated")
 
-    // Wait for os.Signal to occur, then terminate application with maximum timeout of 20 seconds:
-    if err := terminator.Wait(appCtx, 20*time.Second); err != nil {
-        log.Printf("graceful termination period was timed out: %+v", err)
-    }
+			const sleepTime = 3 * time.Second
+			select {
+			case <-time.After(sleepTime):
+				log.Printf("DB termination sleep time %v is over\n", sleepTime)
+			case <-ctx.Done():
+				log.Printf("DB termination Context is Done because of: %+v\n", ctx.Err())
+			}
+		})
+
+	// Wait for os.Signal to occur, then terminate application with maximum timeout of 20 seconds:
+	if err := terminator.Wait(appCtx, 20*time.Second); err != nil {
+		log.Printf("graceful termination period was timed out: %+v", err)
+	}
 }
 ```
 
@@ -97,10 +105,13 @@ import (
 )
 
 func main() {
+    // Define Order for HTTP Server termination:
+    const HTTPServerTerminationOrder graterm.Order = 1
+	
+    // create new Terminator instance:
     terminator, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 
-    // .....................
-
+    // Create an HTTP Server and add one simple handler into it:
     httpServer := &http.Server{
         Addr:    ":8080",
         Handler: http.DefaultServeMux,
@@ -109,13 +120,15 @@ func main() {
         fmt.Fprintf(w, "hello, world!")
     })
 
+    // Start HTTP server in a separate goroutine:
     go func() { 
         if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
             log.Printf("terminated HTTP Server: %+v\n", err)
         }
     }()
 
-    terminator.WithOrder(1).
+    // Register HTTP Server termination hook:
+    terminator.WithOrder(HTTPServerTerminationOrder).
         WithName("HTTPServer").
         Register(10*time.Second, func(ctx context.Context) {
             if err := httpServer.Shutdown(ctx); err != nil {
@@ -123,6 +136,7 @@ func main() {
             }
         })
 
+    // Wait for os.Signal to occur, then terminate application with maximum timeout of 30 seconds:
     if err := terminator.Wait(appCtx, 30*time.Second); err != nil {
         log.Printf("graceful termination period is timed out: %+v\n", err)
     }

@@ -33,10 +33,10 @@ const (
 )
 
 const (
-	HTTPServerOrder graterm.Order = 0
-	MessagingOrder  graterm.Order = 1
-	FastDBOrder     graterm.Order = 2
-	SlowDBOrder     graterm.Order = 2
+	HTTPServerTerminationOrder graterm.Order = 0
+	MessagingTerminationOrder  graterm.Order = 1
+	FastDBTerminationOrder     graterm.Order = 2
+	SlowDBTerminationOrder     graterm.Order = 2
 )
 
 func main() {
@@ -114,7 +114,7 @@ func (s *Server) Init() {
 		}
 	}()
 
-	s.terminator.WithOrder(HTTPServerOrder).
+	s.terminator.WithOrder(HTTPServerTerminationOrder).
 		WithName("HTTPServer").
 		Register(httpServerTerminationTimeout, func(ctx context.Context) {
 			s.logger.Println("terminating HTTP Server component...")
@@ -139,7 +139,7 @@ func NewMessaging(terminator *graterm.Terminator, logger *log.Logger) *Messaging
 
 func (m *Messaging) Init() {
 	defer m.logger.Println("Messaging initialized")
-	m.terminator.WithOrder(MessagingOrder).
+	m.terminator.WithOrder(MessagingTerminationOrder).
 		WithName("Messaging").
 		Register(messagingTerminationTimeout, func(ctx context.Context) {
 			m.logger.Println("terminating Messaging component...")
@@ -158,7 +158,7 @@ func NewFastDB(terminator *graterm.Terminator, logger *log.Logger) *FastDB {
 
 func (d *FastDB) Init() {
 	defer d.logger.Println("FastDB initialized")
-	d.terminator.WithOrder(FastDBOrder).
+	d.terminator.WithOrder(FastDBTerminationOrder).
 		WithName("FastDB").
 		Register(fastDBTerminationTimeout, func(ctx context.Context) {
 			d.logger.Println("terminating FastDB component...")
@@ -177,7 +177,7 @@ func NewSlowDB(terminator *graterm.Terminator, logger *log.Logger) *SlowDB {
 
 func (d *SlowDB) Init() {
 	defer d.logger.Println("SlowDB initialized")
-	d.terminator.WithOrder(SlowDBOrder).
+	d.terminator.WithOrder(SlowDBTerminationOrder).
 		WithName("SlowDB").
 		Register(slowDBTerminationTimeout, func(ctx context.Context) {
 			d.logger.Println("terminating SlowDB component...")
