@@ -107,7 +107,8 @@ import (
 func main() {
     // Define Order for HTTP Server termination:
     const HTTPServerTerminationOrder graterm.Order = 1
-
+	
+    // create new Terminator instance:
     terminator, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 
     // Create an HTTP Server and add one simple handler into it:
