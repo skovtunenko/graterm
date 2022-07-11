@@ -8,28 +8,35 @@
 // Example code for generic application components:
 //
 // 	func main() {
+// 		// Define Orders:
+// 		const (
+// 			HTTPServerTerminationOrder graterm.Order = 1
+// 			DBTerminationOrder         graterm.Order = 2
+// 		)
+//
 // 		// create new Terminator instance:
 // 		terminator, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 //
-// 		// Register some hooks:
-// 		terminator.WithOrder(1).
-// 			WithName("HOOK#1").
+// 		// Register HTTP Server termination hook:
+// 		terminator.WithOrder(HTTPServerTerminationOrder).
+// 			WithName("HTTP Server").
 // 			Register(1*time.Second, func(ctx context.Context) {
-// 				log.Println("terminating HOOK#1...")
-// 				defer log.Println("...HOOK#1 terminated")
+// 				log.Println("terminating HTTP Server...")
+// 				defer log.Println("...HTTP Server terminated")
 // 			})
 //
-// 		terminator.WithOrder(2).
+// 		// Register nameless DB termination hook:
+// 		terminator.WithOrder(DBTerminationOrder).
 // 			Register(1*time.Second, func(ctx context.Context) {
-// 				log.Println("terminating HOOK#2...")
-// 				defer log.Println("...HOOK#2 terminated")
+// 				log.Println("terminating Database...")
+// 				defer log.Println("...Database terminated")
 //
 // 				const sleepTime = 3 * time.Second
 // 				select {
 // 				case <-time.After(sleepTime):
-// 					log.Printf("HOOK#2 sleep time %v is over\n", sleepTime)
+// 					log.Printf("Database termination sleep time %v is over\n", sleepTime)
 // 				case <-ctx.Done():
-// 					log.Printf("HOOK#2 Context is Done because of: %+v\n", ctx.Err())
+// 					log.Printf("Database termination Context is Done because of: %+v\n", ctx.Err())
 // 				}
 // 			})
 //
