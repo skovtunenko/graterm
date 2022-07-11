@@ -2,7 +2,10 @@ package graterm_test
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"log"
+	"net/http"
 	"syscall"
 	"time"
 
@@ -45,7 +48,7 @@ func ExampleTerminator_Wait() {
 	}
 }
 
-func ExampleTerminator_WithOrder() {
+func ExampleTerminator_WithOrder_1() {
 	// Define Orders:
 	const (
 		HTTPServerTerminationOrder graterm.Order = 1
@@ -90,6 +93,44 @@ func ExampleTerminator_WithOrder() {
 	// Wait for os.Signal to occur, then terminate application with maximum timeout of 20 seconds:
 	if err := terminator.Wait(appCtx, 20*time.Second); err != nil {
 		log.Printf("graceful termination period was timed out: %+v", err)
+	}
+}
+
+func ExampleTerminator_WithOrder_2() {
+	// Define Order for HTTP Server termination:
+	const HTTPServerTerminationOrder graterm.Order = 1
+
+	// create new Terminator instance:
+	terminator, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+
+	// Create an HTTP Server and add one simple handler into it:
+	httpServer := &http.Server{
+		Addr:    ":8080",
+		Handler: http.DefaultServeMux,
+	}
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "hello, world!")
+	})
+
+	// Start HTTP server in a separate goroutine:
+	go func() {
+		if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Printf("terminated HTTP Server: %+v\n", err)
+		}
+	}()
+
+	// Register HTTP Server termination hook:
+	terminator.WithOrder(HTTPServerTerminationOrder).
+		WithName("HTTPServer").
+		Register(10*time.Second, func(ctx context.Context) {
+			if err := httpServer.Shutdown(ctx); err != nil {
+				log.Printf("shutdown HTTP Server: %+v\n", err)
+			}
+		})
+
+	// Wait for os.Signal to occur, then terminate application with maximum timeout of 30 seconds:
+	if err := terminator.Wait(appCtx, 30*time.Second); err != nil {
+		log.Printf("graceful termination period is timed out: %+v\n", err)
 	}
 }
 
