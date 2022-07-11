@@ -78,6 +78,10 @@ if err := terminator.Wait(appCtx, 20*time.Second); err != nil {
 * 100% test coverage, including goroutine leak tests
 * Rich set of examples
 
+# Versioning
+
+The library follows SemVer policy. With the release of v1.0.0 the public API is stable. 
+
 # Example
 
 Each public function has example attached to it. Here is the simple one:
