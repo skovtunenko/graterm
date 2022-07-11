@@ -6,6 +6,8 @@
 
 	It is possible to set individual timeouts for each registered termination hook and global termination timeout for the whole application.
 
+	Examples
+
 	Example code for generic application components:
 
 		func main() {
