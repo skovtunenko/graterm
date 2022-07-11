@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-// Terminator is a component terminator that executes registered termination [Hook]s in a specified order.
+// Terminator is a component terminator that executes registered termination Hooks in a specified order.
 type Terminator struct {
 	hooksMx *sync.Mutex
 	hooks   map[Order][]Hook
