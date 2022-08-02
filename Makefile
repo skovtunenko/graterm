@@ -13,7 +13,7 @@ code-quality: ## Print code smells using Golangci-lint
 .PHONY: install-tools
 install-tools: ## Install dependencies locally
 	@echo "Installing tools locally..."
-	@GO111MODULE=on go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.46.2
+	@GO111MODULE=on go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.47.3
 	@echo "Done."
 
 # local dev only:
