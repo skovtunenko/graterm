@@ -6,12 +6,15 @@
 
 	It is possible to set individual timeouts for each registered termination hook and global termination timeout for the whole application.
 
+	Optionally a Hook may have a name (using Hook.WithName). It might be handy only if the Logger injected into Terminator instance to
+	log internal termination lifecycle events.
+
 	Examples
 
 	Example code for generic application components:
 
 		func main() {
-			// Define Orders:
+			// Define termination Orders:
 			const (
 				HTTPServerTerminationOrder graterm.Order = 1
 				DBTerminationOrder         graterm.Order = 2
@@ -19,10 +22,11 @@
 
 			// create new Terminator instance:
 			terminator, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+			terminator.SetLogger(log.Default()) // Optional step
 
 			// Register HTTP Server termination hook:
 			terminator.WithOrder(HTTPServerTerminationOrder).
-				WithName("HTTP Server").
+				WithName("HTTP Server"). // setting a Name is optional and will be useful only if logger instance provided
 				Register(1*time.Second, func(ctx context.Context) {
 					log.Println("terminating HTTP Server...")
 					defer log.Println("...HTTP Server terminated")
@@ -57,11 +61,13 @@
 
 			// create new Terminator instance:
 			terminator, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+			terminator.SetLogger(log.Default()) // Optional step
 
 			// Create an HTTP Server and add one simple handler into it:
 			httpServer := &http.Server{
-				Addr:    ":8080",
-				Handler: http.DefaultServeMux,
+				ReadHeaderTimeout: 60 * time.Second, // fix for potential Slowloris Attack
+				Addr:              ":8080",
+				Handler:           http.DefaultServeMux,
 			}
 			http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 				fmt.Fprintf(w, "hello, world!")
@@ -76,7 +82,7 @@
 
 			// Register HTTP Server termination hook:
 			terminator.WithOrder(HTTPServerTerminationOrder).
-				WithName("HTTPServer").
+				WithName("HTTPServer"). // setting a Name is optional and will be useful only if logger instance provided
 				Register(10*time.Second, func(ctx context.Context) {
 					if err := httpServer.Shutdown(ctx); err != nil {
 						log.Printf("shutdown HTTP Server: %+v\n", err)
