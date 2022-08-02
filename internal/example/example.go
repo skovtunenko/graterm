@@ -44,7 +44,11 @@ func main() {
 
 	logger.Println("Application started...")
 
-	terminator, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	// ...Some root context for the whole application... (or it can be just context.Background())
+	rootCtx, rootCancel := context.WithCancel(context.Background())
+	defer rootCancel()
+
+	terminator, appCtx := graterm.NewWithSignals(rootCtx, syscall.SIGINT, syscall.SIGTERM)
 	terminator.SetLogger(logger) // Optional step
 
 	// Wire application components:
