@@ -18,9 +18,10 @@ const (
 // Lower order - higher priority.
 type Order int
 
-// Hook is a registered termination hook.
+// Hook is a registered ordered termination unit of work.
+// I.e., the code that needs to be executed to perform resource cleanup or any other maintenance while shutting down the application.
 //
-// Do not create a Hook instance manually, use Terminator.WithOrder() method instead to get a Hook instance.
+// Do NOT create a Hook instance manually, use Terminator.WithOrder() method instead to get a Hook instance.
 type Hook struct {
 	terminator *Terminator // terminator is a pointer to Terminator instance that holds registered Hooks.
 
