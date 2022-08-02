@@ -45,7 +45,7 @@ func main() {
 	logger.Println("Application started...")
 
 	terminator, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	terminator.SetLogger(logger)
+	terminator.SetLogger(logger) // Optional step
 
 	// Wire application components:
 	slowDB := NewSlowDB(terminator, logger)
@@ -116,7 +116,7 @@ func (s *Server) Init() {
 	}()
 
 	s.terminator.WithOrder(HTTPServerTerminationOrder).
-		WithName("HTTPServer").
+		WithName("HTTPServer"). // setting a Name is optional and will be useful only if logger instance provided
 		Register(httpServerTerminationTimeout, func(ctx context.Context) {
 			s.logger.Println("terminating HTTP Server component...")
 			defer s.logger.Println("...HTTP Server component terminated")
@@ -141,7 +141,7 @@ func NewMessaging(terminator *graterm.Terminator, logger *log.Logger) *Messaging
 func (m *Messaging) Init() {
 	defer m.logger.Println("Messaging initialized")
 	m.terminator.WithOrder(MessagingTerminationOrder).
-		WithName("Messaging").
+		WithName("Messaging"). // setting a Name is optional and will be useful only if logger instance provided
 		Register(messagingTerminationTimeout, func(ctx context.Context) {
 			m.logger.Println("terminating Messaging component...")
 			defer m.logger.Println("...Messaging component terminated")
@@ -160,7 +160,7 @@ func NewFastDB(terminator *graterm.Terminator, logger *log.Logger) *FastDB {
 func (d *FastDB) Init() {
 	defer d.logger.Println("FastDB initialized")
 	d.terminator.WithOrder(FastDBTerminationOrder).
-		WithName("FastDB").
+		WithName("FastDB"). // setting a Name is optional and will be useful only if logger instance provided
 		Register(fastDBTerminationTimeout, func(ctx context.Context) {
 			d.logger.Println("terminating FastDB component...")
 			defer d.logger.Println("...FastDB component terminated")
@@ -181,7 +181,7 @@ func NewSlowDB(terminator *graterm.Terminator, logger *log.Logger) *SlowDB {
 func (d *SlowDB) Init() {
 	defer d.logger.Println("SlowDB initialized")
 	d.terminator.WithOrder(SlowDBTerminationOrder).
-		WithName("SlowDB").
+		WithName("SlowDB"). // setting a Name is optional and will be useful only if logger instance provided
 		Register(slowDBTerminationTimeout, func(ctx context.Context) {
 			d.logger.Println("terminating SlowDB component...")
 			defer d.logger.Println("...SlowDB component terminated")
