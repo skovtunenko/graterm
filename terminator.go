@@ -25,6 +25,9 @@ type Terminator struct {
 
 // NewWithSignals creates a new instance of component Terminator.
 //
+// If the given appCtx parameter is canceled, the termination process will start for already registered Hook instances
+// after calling Terminator.Wait method.
+//
 // Example of useful signals might be: [syscall.SIGINT], [syscall.SIGTERM].
 //
 // Note: this method will start internal monitoring goroutine.
