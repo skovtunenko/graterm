@@ -18,9 +18,10 @@ const (
 // Lower order - higher priority.
 type Order int
 
-// Hook is a registered termination hook.
+// Hook is a registered ordered termination unit of work.
+// I.e., the code that needs to be executed to perform resource cleanup or any other maintenance while shutting down the application.
 //
-// Do not create a Hook instance manually, use Terminator.WithOrder() method instead to get a Hook instance.
+// Do NOT create a Hook instance manually, use Terminator.WithOrder() method instead to get a Hook instance.
 type Hook struct {
 	terminator *Terminator // terminator is a pointer to Terminator instance that holds registered Hooks.
 
@@ -31,6 +32,9 @@ type Hook struct {
 }
 
 // WithName sets (optional) human-readable name of the registered termination [Hook].
+//
+// The Hook name will be useful only if Logger instance has been injected (using Terminator.SetLogger method) into Terminator
+// to log internal termination lifecycle events.
 func (h *Hook) WithName(name string) *Hook {
 	h.name = name
 	return h
@@ -39,6 +43,9 @@ func (h *Hook) WithName(name string) *Hook {
 // Register registers termination [Hook] that should finish execution in less than given timeout.
 //
 // Timeout duration must be greater than zero; if not, timeout of 1 min will be used.
+//
+// The context value passed into hookFunc will be used only for cancellation signaling.
+// I.e. to signal that Terminator will no longer wait on Hook to finish termination.
 func (h *Hook) Register(timeout time.Duration, hookFunc func(ctx context.Context)) {
 	if timeout <= 0 {
 		timeout = defaultTimeout

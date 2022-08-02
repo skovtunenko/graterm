@@ -58,10 +58,11 @@ func ExampleTerminator_WithOrder_1() {
 
 	// create new Terminator instance:
 	terminator, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	terminator.SetLogger(log.Default()) // Optional step
 
 	// Register HTTP Server termination hook:
 	terminator.WithOrder(HTTPServerTerminationOrder).
-		WithName("HTTP Server").
+		WithName("HTTP Server"). // setting a Name is optional and will be useful only if logger instance provided
 		Register(1*time.Second, func(ctx context.Context) {
 			log.Println("terminating HTTP Server...")
 			defer log.Println("...HTTP Server terminated")
@@ -76,7 +77,7 @@ func ExampleTerminator_WithOrder_1() {
 
 	// Register Database termination hook:
 	terminator.WithOrder(DBTerminationOrder).
-		WithName("DB").
+		WithName("DB"). // setting a Name is optional and will be useful only if logger instance provided
 		Register(1*time.Second, func(ctx context.Context) {
 			log.Println("terminating DB...")
 			defer log.Println("...DB terminated")
@@ -102,6 +103,7 @@ func ExampleTerminator_WithOrder_2() {
 
 	// create new Terminator instance:
 	terminator, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	terminator.SetLogger(log.Default()) // Optional step
 
 	// Create an HTTP Server and add one simple handler into it:
 	httpServer := &http.Server{
@@ -121,7 +123,7 @@ func ExampleTerminator_WithOrder_2() {
 
 	// Register HTTP Server termination hook:
 	terminator.WithOrder(HTTPServerTerminationOrder).
-		WithName("HTTPServer").
+		WithName("HTTPServer"). // setting a Name is optional and will be useful only if logger instance provided
 		Register(10*time.Second, func(ctx context.Context) {
 			if err := httpServer.Shutdown(ctx); err != nil {
 				log.Printf("shutdown HTTP Server: %+v\n", err)
@@ -164,6 +166,7 @@ func ExampleHook_WithName() {
 
 	// create new Terminator instance:
 	terminator, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	terminator.SetLogger(log.Default()) // Optional step
 
 	// Register some hooks:
 	terminator.WithOrder(HTTPServerTerminationOrder).
