@@ -63,7 +63,7 @@ const (
 Register some termination [Hooks](https://pkg.go.dev/github.com/skovtunenko/graterm#Hook) with priorities:
 ```go
 terminator.WithOrder(HTTPServerTerminationOrder).
-    WithName("HTTP Server").
+    WithName("HTTP Server"). // setting a Name is optional and will be useful only if logger instance provided
     Register(1*time.Second, func(ctx context.Context) {
         if err := httpServer.Shutdown(ctx); err != nil {
             log.Printf("shutdown HTTP Server: %+v\n", err)
@@ -108,10 +108,11 @@ func main() {
 
 	// create new Terminator instance:
 	terminator, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	terminator.SetLogger(log.Default()) // Optional step
 
 	// Register HTTP Server termination hook:
 	terminator.WithOrder(HTTPServerTerminationOrder).
-		WithName("HTTP Server").
+		WithName("HTTP Server"). // setting a Name is optional and will be useful only if logger instance provided
 		Register(1*time.Second, func(ctx context.Context) {
 			log.Println("terminating HTTP Server...")
 			defer log.Println("...HTTP Server terminated")
@@ -126,7 +127,7 @@ func main() {
 
 	// Register Database termination hook:
 	terminator.WithOrder(DBTerminationOrder).
-		WithName("DB").
+		WithName("DB"). // setting a Name is optional and will be useful only if logger instance provided
 		Register(1*time.Second, func(ctx context.Context) {
 			log.Println("terminating DB...")
 			defer log.Println("...DB terminated")
@@ -173,11 +174,13 @@ func main() {
 	
     // create new Terminator instance:
     terminator, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	terminator.SetLogger(log.Default()) // Optional step
 
     // Create an HTTP Server and add one simple handler into it:
     httpServer := &http.Server{
-        Addr:    ":8080",
-        Handler: http.DefaultServeMux,
+		ReadHeaderTimeout: 60 * time.Second, // fix for potential Slowloris Attack
+        Addr:              ":8080",
+        Handler:           http.DefaultServeMux,
     }
     http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
         fmt.Fprintf(w, "hello, world!")
@@ -192,7 +195,7 @@ func main() {
 
     // Register HTTP Server termination hook:
     terminator.WithOrder(HTTPServerTerminationOrder).
-        WithName("HTTPServer").
+        WithName("HTTPServer"). // setting a Name is optional and will be useful only if logger instance provided
         Register(10*time.Second, func(ctx context.Context) {
             if err := httpServer.Shutdown(ctx); err != nil {
                 log.Printf("shutdown HTTP Server: %+v\n", err)
