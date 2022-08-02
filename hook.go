@@ -42,6 +42,9 @@ func (h *Hook) WithName(name string) *Hook {
 // Register registers termination [Hook] that should finish execution in less than given timeout.
 //
 // Timeout duration must be greater than zero; if not, timeout of 1 min will be used.
+//
+// The context value passed into hookFunc will be used only for cancellation signaling.
+// I.e. to signal that Terminator will no longer wait on Hook to finish termination.
 func (h *Hook) Register(timeout time.Duration, hookFunc func(ctx context.Context)) {
 	if timeout <= 0 {
 		timeout = defaultTimeout
