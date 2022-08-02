@@ -80,7 +80,7 @@ if err := terminator.Wait(appCtx, 20*time.Second); err != nil {
 
 # 👀 Versioning
 
-The library follows SemVer policy. With the release of v1.0.0 the public API is stable. 
+The library follows SemVer policy. With the release of **v1.0.0** the _public API is stable_. 
 
 # 📚 Example
 
