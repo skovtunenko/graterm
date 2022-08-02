@@ -10,7 +10,7 @@
 
 Provides primitives to perform ordered **GRA**ceful **TERM**ination (aka shutdown) in Go application.
 
-# Description
+# ⚡ ️️Description
 
 Library provides fluent methods to register ordered application termination (aka shutdown) [hooks](https://pkg.go.dev/github.com/skovtunenko/graterm#Hook),
 and block the main goroutine until the registered `os.Signal` will occur. 
@@ -21,7 +21,14 @@ same [Order](https://pkg.go.dev/github.com/skovtunenko/graterm#Order) will be ex
 It is possible to set individual timeouts for each registered termination [hook](https://pkg.go.dev/github.com/skovtunenko/graterm#Hook) 
 and global termination timeout for the whole application.
 
-# Usage
+# 🎯 Features
+
+* Dependency only on a standard Go library (except tests).
+* Component-agnostic (can be adapted to any 3rd party technology).
+* Clean and tested code: 100% test coverage, including goroutine leak tests.
+* Rich set of examples.
+
+# ⚙️ Usage
 
 Get the library:
 ```bash
@@ -71,18 +78,11 @@ if err := terminator.Wait(appCtx, 20*time.Second); err != nil {
 }
 ```
 
-# Features
-
-* dependency only on a standard Go library
-* Component-agnostic (can be adapted to any 3rd party technology)
-* 100% test coverage, including goroutine leak tests
-* Rich set of examples
-
-# Versioning
+# 👀 Versioning
 
 The library follows SemVer policy. With the release of v1.0.0 the public API is stable. 
 
-# Example
+# 📚 Example
 
 Each public function has example attached to it. Here is the simple one:
 
@@ -147,7 +147,7 @@ func main() {
 }
 ```
 
-Integration with HTTP server
+💡 Integration with HTTP server
 -----------
 
 The library doesn't have out of the box support to start/terminate the HTTP server, but that's easy to handle:
@@ -208,7 +208,7 @@ func main() {
 
 The full-fledged example located here: [example.go](https://github.com/skovtunenko/graterm/blob/main/internal/example/example.go)
 
-Testing
+📖 Testing
 -----------
 Unit-tests with code coverage:
 ```bash
@@ -220,13 +220,12 @@ Run linter:
 make code-quality
 ```
 
-LICENSE
+⚠️ LICENSE
 -----------
-MIT
+[MIT](https://github.com/skovtunenko/graterm/blob/main/LICENSE)
 
-AUTHORS
+🕶️ AUTHORS
 -----------
 
-Sergiy Kovtunenko <@skovtunenko>
-
-Oleksandr Halushchak <ohalushchak@exadel.com>
+* [Sergiy Kovtunenko](https://github.com/skovtunenko)
+* [Oleksandr Halushchak](ohalushchak@exadel.com)
