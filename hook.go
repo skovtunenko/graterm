@@ -31,6 +31,9 @@ type Hook struct {
 }
 
 // WithName sets (optional) human-readable name of the registered termination [Hook].
+//
+// The Hook name will be useful only if Logger instance has been injected (using Terminator.SetLogger method) into Terminator
+// to log internal termination lifecycle events.
 func (h *Hook) WithName(name string) *Hook {
 	h.name = name
 	return h
