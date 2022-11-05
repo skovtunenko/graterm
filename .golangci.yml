@@ -32,3 +32,7 @@ linters:
     - gomodguard
     - durationcheck
     - exhaustive
+
+issues:
+  exclude:
+    - "G112: Potential Slowloris Attack because ReadHeaderTimeout is not configured in the http.Server"
