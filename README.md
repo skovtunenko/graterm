@@ -1,5 +1,6 @@
 # graterm
 
+[![Mentioned in Awesome Go](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go)
 ![Lint](https://github.com/skovtunenko/graterm/actions/workflows/golangci-lint.yml/badge.svg?branch=main)
 ![Tests](https://github.com/skovtunenko/graterm/actions/workflows/test.yml/badge.svg?branch=main)
 [![codecov](https://codecov.io/gh/skovtunenko/graterm/branch/main/graph/badge.svg)](https://codecov.io/gh/skovtunenko/graterm)
