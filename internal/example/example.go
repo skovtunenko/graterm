@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/skovtunenko/graterm"
 	"log"
 	"net/http"
 	"syscall"
 	"time"
+
+	"github.com/skovtunenko/graterm"
 )
 
 // Instructions:
@@ -97,9 +98,8 @@ func (s *Server) Init() {
 	defer s.logger.Println("HTTP Server initialized")
 
 	httpServer := &http.Server{
-		ReadHeaderTimeout: 60 * time.Second, // fix for potential Slowloris Attack
-		Addr:              hostPort,
-		Handler:           http.DefaultServeMux,
+		Addr:    hostPort,
+		Handler: http.DefaultServeMux,
 	}
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

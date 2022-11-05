@@ -179,7 +179,6 @@ func main() {
 
     // Create an HTTP Server and add one simple handler into it:
     httpServer := &http.Server{
-		ReadHeaderTimeout: 60 * time.Second, // fix for potential Slowloris Attack
         Addr:              ":8080",
         Handler:           http.DefaultServeMux,
     }
