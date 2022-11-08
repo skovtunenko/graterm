@@ -3,9 +3,11 @@ package graterm
 import (
 	"context"
 	"errors"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"log"
 	"os"
+	"os/exec"
 	"os/signal"
 	"runtime"
 	"sync"
@@ -275,6 +277,39 @@ func TestTerminator_Wait(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestTerminator_restores_signals(t *testing.T) {
+	if os.Getenv("HANG_ON_STOP") == "1" {
+		terminator, ctx := NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+		require.NotNil(t, ctx)
+
+		terminator.WithOrder(0).Register(5*time.Second, func(ctx context.Context) {
+			select {}
+		})
+
+		_ = terminator.Wait(ctx, time.Minute)
+		return
+	}
+
+	cmd := exec.Command(os.Args[0], "-test.run=TestTerminator_restores_signal")
+	cmd.Env = append(cmd.Env, "HANG_ON_STOP=1")
+	require.NoError(t, cmd.Start())
+
+	time.Sleep(100 * time.Millisecond)
+	require.NoError(t, cmd.Process.Signal(syscall.SIGINT))
+
+	time.Sleep(100 * time.Millisecond)
+	require.NoError(t, cmd.Process.Signal(syscall.SIGINT))
+
+	var exitErr *exec.ExitError
+	require.ErrorAs(t, cmd.Wait(), &exitErr)
+
+	ws, ok := exitErr.Sys().(syscall.WaitStatus)
+	require.Truef(t, ok, "exit error is not syscall.WaitStatus, but %T", exitErr.Sys())
+
+	assert.True(t, ws.Signaled(), "process stopped not by signal")
+	assert.Equal(t, syscall.SIGINT, ws.Signal(), "process stopped not by SIGINT")
 }
 
 func Test_withSignals(t *testing.T) {

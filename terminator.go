@@ -55,6 +55,7 @@ func withSignals(ctx context.Context, chSignals chan os.Signal, sig ...os.Signal
 
 	// function invoke cancel once a signal arrived OR parent context is done:
 	go func() {
+		defer signal.Stop(chSignals)
 		defer cancel()
 
 		select {
@@ -139,6 +140,10 @@ func (t *Terminator) waitShutdown(appCtx context.Context) {
 
 			go func(f Hook) {
 				defer runWg.Done()
+
+				if f.preStop > 0 {
+					time.Sleep(f.preStop)
+				}
 
 				ctx, cancel := context.WithTimeout(context.Background(), f.timeout)
 				defer cancel()
