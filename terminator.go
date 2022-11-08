@@ -141,6 +141,10 @@ func (t *Terminator) waitShutdown(appCtx context.Context) {
 			go func(f Hook) {
 				defer runWg.Done()
 
+				if f.preStop > 0 {
+					time.Sleep(f.preStop)
+				}
+
 				ctx, cancel := context.WithTimeout(context.Background(), f.timeout)
 				defer cancel()
 

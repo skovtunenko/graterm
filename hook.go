@@ -27,6 +27,7 @@ type Hook struct {
 
 	order    Order                     // order is Hook order.
 	name     string                    // name is an optional component name for pretty-printing in logs.
+	preStop  time.Duration             // time to wait _before_ triggering shutdown hook.
 	timeout  time.Duration             // timeout is max hookFunc execution timeout.
 	hookFunc func(ctx context.Context) // hookFunc is a user-defined termination hook function.
 }
@@ -37,6 +38,15 @@ type Hook struct {
 // to log internal termination lifecycle events.
 func (h *Hook) WithName(name string) *Hook {
 	h.name = name
+	return h
+}
+
+// WithPreStopSleep sets (optional) period between signal receive and shutdown hook call. It does not depend on hook timeout.
+//
+// This needed for correct graceful termination of network services in Kubernetes.
+// See https://blog.palark.com/graceful-shutdown-in-kubernetes-is-not-always-trivial/ for detailed information.
+func (h *Hook) WithPreStopSleep(t time.Duration) *Hook {
+	h.preStop = t
 	return h
 }
 
