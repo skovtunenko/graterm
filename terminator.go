@@ -55,6 +55,7 @@ func withSignals(ctx context.Context, chSignals chan os.Signal, sig ...os.Signal
 
 	// function invoke cancel once a signal arrived OR parent context is done:
 	go func() {
+		defer signal.Stop(chSignals)
 		defer cancel()
 
 		select {
