@@ -26,7 +26,6 @@ linters:
         - fatcontext
         - forbidigo
         - forcetypeassert
-        - funlen
         - gci
         - ginkgolinter
         - gocheckcompilerdirectives
@@ -91,9 +90,7 @@ linters:
         - stylecheck
         - tagalign
         - tagliatelle
-        - testableexamples
         - testifylint
-        - testpackage
         - thelper
         - tparallel
         - unconvert
@@ -107,6 +104,15 @@ linters:
 #        - wsl
         - zerologlint
 
+linters-settings:
+    paralleltest:
+        # Ignore missing calls to `t.Parallel()` and only report incorrect uses of it.
+        # Default: false
+        ignore-missing: true
+        # Ignore missing calls to `t.Parallel()` in subtests. Top-level tests are
+        # still required to have `t.Parallel`, but subtests are allowed to skip it.
+        # Default: false
+        ignore-missing-subtests: true
 
 issues:
     exclude:
@@ -116,4 +122,4 @@ run:
     timeout: 1m
     modules-download-mode: vendor
     # include test files or not, default is true
-    tests: false
+    tests: true
