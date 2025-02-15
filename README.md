@@ -57,7 +57,7 @@ const (
     HTTPServerTerminationOrder graterm.Order = 1
     MessagingTerminationOrder  graterm.Order = 1
     DBTerminationOrder         graterm.Order = 2
-	// ..........
+    // ..........
 )
 ```
 
@@ -100,52 +100,52 @@ import (
 )
 
 func main() {
-	// Define Orders:
-	const (
-		HTTPServerTerminationOrder graterm.Order = 1
-		MessagingTerminationOrder  graterm.Order = 1
-		DBTerminationOrder         graterm.Order = 2
-	)
+    // Define Orders:
+    const (
+        HTTPServerTerminationOrder graterm.Order = 1
+        MessagingTerminationOrder  graterm.Order = 1
+        DBTerminationOrder         graterm.Order = 2
+    )
 
-	// create new Terminator instance:
-	terminator, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	terminator.SetLogger(log.Default()) // Optional step
+    // create new Terminator instance:
+    terminator, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+    terminator.SetLogger(log.Default()) // Optional step
 
-	// Register HTTP Server termination hook:
-	terminator.WithOrder(HTTPServerTerminationOrder).
-		WithName("HTTP Server"). // setting a Name is optional and will be useful only if logger instance provided
-		Register(1*time.Second, func(ctx context.Context) {
-			log.Println("terminating HTTP Server...")
-			defer log.Println("...HTTP Server terminated")
-		})
+    // Register HTTP Server termination hook:
+    terminator.WithOrder(HTTPServerTerminationOrder).
+        WithName("HTTP Server"). // setting a Name is optional and will be useful only if logger instance provided
+        Register(1*time.Second, func(ctx context.Context) {
+            log.Println("terminating HTTP Server...")
+            defer log.Println("...HTTP Server terminated")
+        })
 
-	// Register nameless Messaging termination hook:
-	terminator.WithOrder(MessagingTerminationOrder).
-		Register(1*time.Second, func(ctx context.Context) {
-			log.Println("terminating Messaging...")
-			defer log.Println("...Messaging terminated")
-		})
+    // Register nameless Messaging termination hook:
+    terminator.WithOrder(MessagingTerminationOrder).
+        Register(1*time.Second, func(ctx context.Context) {
+            log.Println("terminating Messaging...")
+            defer log.Println("...Messaging terminated")
+        })
 
-	// Register Database termination hook:
-	terminator.WithOrder(DBTerminationOrder).
-		WithName("DB"). // setting a Name is optional and will be useful only if logger instance provided
-		Register(1*time.Second, func(ctx context.Context) {
-			log.Println("terminating DB...")
-			defer log.Println("...DB terminated")
+    // Register Database termination hook:
+    terminator.WithOrder(DBTerminationOrder).
+        WithName("DB"). // setting a Name is optional and will be useful only if logger instance provided
+        Register(1*time.Second, func(ctx context.Context) {
+            log.Println("terminating DB...")
+            defer log.Println("...DB terminated")
 
-			const sleepTime = 3 * time.Second
-			select {
-			case <-time.After(sleepTime):
-				log.Printf("DB termination sleep time %v is over\n", sleepTime)
-			case <-ctx.Done():
-				log.Printf("DB termination Context is Done because of: %+v\n", ctx.Err())
-			}
-		})
+            const sleepTime = 3 * time.Second
+            select {
+            case <-time.After(sleepTime):
+                log.Printf("DB termination sleep time %v is over\n", sleepTime)
+            case <-ctx.Done():
+                log.Printf("DB termination Context is Done because of: %+v\n", ctx.Err())
+            }
+        })
 
-	// Wait for os.Signal to occur, then terminate application with maximum timeout of 20 seconds:
-	if err := terminator.Wait(appCtx, 20*time.Second); err != nil {
-		log.Printf("graceful termination period was timed out: %+v", err)
-	}
+    // Wait for os.Signal to occur, then terminate application with maximum timeout of 20 seconds:
+    if err := terminator.Wait(appCtx, 20*time.Second); err != nil {
+        log.Printf("graceful termination period was timed out: %+v", err)
+    }
 }
 ```
 
@@ -172,10 +172,10 @@ import (
 func main() {
     // Define Order for HTTP Server termination:
     const HTTPServerTerminationOrder graterm.Order = 1
-	
+
     // create new Terminator instance:
     terminator, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	terminator.SetLogger(log.Default()) // Optional step
+    terminator.SetLogger(log.Default()) // Optional step
 
     // Create an HTTP Server and add one simple handler into it:
     httpServer := &http.Server{
