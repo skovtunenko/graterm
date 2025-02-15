@@ -1,38 +1,119 @@
-run:
-  timeout: 1m
-  modules-download-mode: vendor
-  # include test files or not, default is true
-  tests: false
-  skip-files:
-    - '.*_test.go'
-
 linters:
-  enable:
-    - bodyclose
-    - depguard
-    - dogsled
-    - dupl
-    - funlen
-    - prealloc
-    - dogsled
-    - exportloopref
-    - unconvert
-    - unparam
-    - whitespace
-    - bodyclose
-    - gosec
-    - asciicheck
-    - depguard
-    - errorlint
-    - goconst
-    - gocritic
-    - errname
-    - thelper
-    - contextcheck
-    - gomodguard
-    - durationcheck
-    - exhaustive
+    disable-all: true
+    enable:
+        - asasalint
+        - asciicheck
+        - bidichk
+        - bodyclose
+        - canonicalheader
+        - containedctx
+#        - contextcheck
+        - copyloopvar
+        - cyclop
+        - decorder
+#        - depguard
+        - dogsled
+        - dupl
+        - dupword
+        - durationcheck
+#        - err113
+        - errcheck
+        - errchkjson
+        - errname
+        - errorlint
+        - exhaustive
+        - exptostd
+        - fatcontext
+        - forbidigo
+        - forcetypeassert
+        - funlen
+        - gci
+        - ginkgolinter
+        - gocheckcompilerdirectives
+        - gochecknoglobals
+        - gochecknoinits
+        - gochecksumtype
+        - gocognit
+        - goconst
+        - gocritic
+        - gocyclo
+        - godot
+        - godox
+        - gofmt
+        - gofumpt
+        - goheader
+        - goimports
+        - gomoddirectives
+        - gomodguard
+        - goprintffuncname
+        - gosec
+        - gosimple
+        - gosmopolitan
+        - govet
+        - grouper
+        - iface
+        - importas
+        - inamedparam
+        - ineffassign
+        - interfacebloat
+        - intrange
+        - ireturn
+        - loggercheck
+        - maintidx
+        - makezero
+        - mirror
+        - misspell
+        - mnd
+        - musttag
+        - nakedret
+        - nestif
+        - nilerr
+        - nilnesserr
+        - nilnil
+        - noctx
+        - nolintlint
+        - nonamedreturns
+        - nosprintfhostport
+        - paralleltest
+        - perfsprint
+        - prealloc
+        - predeclared
+        - promlinter
+        - protogetter
+        - reassign
+        - recvcheck
+#        - revive
+        - rowserrcheck
+        - sloglint
+        - spancheck
+        - sqlclosecheck
+        - staticcheck
+        - stylecheck
+        - tagalign
+        - tagliatelle
+        - testableexamples
+        - testifylint
+        - testpackage
+        - thelper
+        - tparallel
+        - unconvert
+        - unparam
+        - unused
+        - usestdlibvars
+        - usetesting
+        - wastedassign
+        - whitespace
+        - wrapcheck
+#        - wsl
+        - zerologlint
+
 
 issues:
-  exclude:
-    - "G112: Potential Slowloris Attack because ReadHeaderTimeout is not configured in the http.Server"
+    exclude:
+        - "G112: Potential Slowloris Attack because ReadHeaderTimeout is not configured in the http.Server"
+
+run:
+    timeout: 1m
+    modules-download-mode: vendor
+    # include test files or not, default is true
+    tests: false

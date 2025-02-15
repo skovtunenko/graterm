@@ -9,11 +9,10 @@ type Logger interface {
 }
 
 // noopLogger is a logger that will do nothing.
-type noopLogger struct {
-}
+type noopLogger struct{}
 
 // Printf will do nothing.
-func (_ noopLogger) Printf(format string, v ...interface{}) {
+func (noopLogger) Printf(format string, v ...interface{}) {
 	// do nothing.
 }
 

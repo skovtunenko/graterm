@@ -169,7 +169,7 @@ func (d *FastDB) Init() {
 			d.logger.Println("terminating FastDB component...")
 			defer d.logger.Println("...FastDB component terminated")
 
-			panic(errors.New("BOOM!"))
+			panic(errors.New("BOOM"))
 		})
 }
 
