@@ -8,13 +8,11 @@ run:
 
 linters:
   enable:
-    - bodyclose
     - depguard
     - dogsled
     - dupl
     - funlen
     - prealloc
-    - dogsled
     - exportloopref
     - unconvert
     - unparam
@@ -22,7 +20,6 @@ linters:
     - bodyclose
     - gosec
     - asciicheck
-    - depguard
     - errorlint
     - goconst
     - gocritic
