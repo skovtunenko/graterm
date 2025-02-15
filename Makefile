@@ -2,6 +2,9 @@ export GO111MODULE=on
 
 PROJECT_PATH=$(shell dirname $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST)))))
 
+# Default make goal
+.DEFAULT_GOAL := help
+
 .PHONY: test
 test: ## Run tests for all packages (test cache is disabled)
 	go test -count=1 -race -trimpath -cover ./...
