@@ -14,6 +14,8 @@ import (
 )
 
 func TestNewWithSignals(t *testing.T) {
+	t.Parallel()
+
 	rootCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -32,6 +34,8 @@ func TestTerminator_Register(t *testing.T) {
 	t.Parallel()
 
 	t.Run("add_only_one_hook_with_negative_timeout", func(t *testing.T) {
+		t.Parallel()
+
 		rootCtx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
@@ -49,6 +53,8 @@ func TestTerminator_Register(t *testing.T) {
 	})
 
 	t.Run("add_only_one_hook", func(t *testing.T) {
+		t.Parallel()
+
 		rootCtx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
@@ -66,6 +72,8 @@ func TestTerminator_Register(t *testing.T) {
 	})
 
 	t.Run("add_with_different_order", func(t *testing.T) {
+		t.Parallel()
+
 		rootCtx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
@@ -90,6 +98,8 @@ func TestTerminator_Register(t *testing.T) {
 	})
 
 	t.Run("add_with_the_same_order", func(t *testing.T) {
+		t.Parallel()
+
 		rootCtx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
@@ -110,6 +120,8 @@ func TestTerminator_Register(t *testing.T) {
 	})
 
 	t.Run("panic_in_registered_hook", func(t *testing.T) {
+		t.Parallel()
+
 		rootCtx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 

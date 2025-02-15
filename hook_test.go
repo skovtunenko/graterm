@@ -5,6 +5,8 @@ import (
 )
 
 func Test_Hook_String(t *testing.T) {
+	t.Parallel()
+
 	type fields struct {
 		hook *Hook
 	}
