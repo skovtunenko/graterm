@@ -7,7 +7,7 @@ jobs:
   test:
     strategy:
       matrix:
-        go-version: [1.20, 1.21, 1.22, 1.23, 1.24]
+        go-version: ['1.20', '1.21', '1.22', '1.23', '1.24']
     name: test
     runs-on: ubuntu-latest
     steps:
