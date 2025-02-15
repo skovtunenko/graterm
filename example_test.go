@@ -48,7 +48,7 @@ func ExampleTerminator_Wait() {
 	}
 }
 
-func ExampleTerminator_WithOrder_1() {
+func ExampleTerminator_WithOrder_genericApplicationComponents() {
 	// Define Orders:
 	const (
 		HTTPServerTerminationOrder graterm.Order = 1
@@ -97,7 +97,7 @@ func ExampleTerminator_WithOrder_1() {
 	}
 }
 
-func ExampleTerminator_WithOrder_2() {
+func ExampleTerminator_WithOrder_httpServer() {
 	// Define Order for HTTP Server termination:
 	const HTTPServerTerminationOrder graterm.Order = 1
 
