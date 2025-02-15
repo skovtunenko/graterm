@@ -3,7 +3,6 @@ package graterm
 import (
 	"context"
 	"errors"
-	"github.com/stretchr/testify/require"
 	"log"
 	"os"
 	"os/signal"
@@ -19,14 +18,14 @@ func TestNewWithSignals(t *testing.T) {
 	defer cancel()
 
 	got, ctx := NewWithSignals(rootCtx, syscall.SIGINT, syscall.SIGTERM)
-	require.NotNil(t, got)
-	require.NotNil(t, ctx)
+	assertNotNil(t, got)
+	assertNotNil(t, ctx)
 
-	require.NotNil(t, got.hooksMx)
-	require.NotNil(t, got.hooks)
-	require.NotNil(t, got.wg)
-	require.NotNil(t, got.cancelFunc)
-	require.NotNil(t, got.log)
+	assertNotNil(t, got.hooksMx)
+	assertNotNil(t, got.hooks)
+	assertNotNil(t, got.wg)
+	assertNotNil(t, got.cancelFunc)
+	assertNotNil(t, got.log)
 }
 
 func TestTerminator_Register(t *testing.T) {
@@ -37,16 +36,16 @@ func TestTerminator_Register(t *testing.T) {
 		defer cancel()
 
 		terminator, ctx := NewWithSignals(rootCtx, syscall.SIGINT, syscall.SIGTERM)
-		require.NotNil(t, ctx)
+		assertNotNil(t, ctx)
 
 		terminator.WithOrder(777).Register(-1, func(_ context.Context) {}) // negative timeout
 
-		require.Equal(t, 1, len(terminator.hooks))
+		assertEqual(t, 1, len(terminator.hooks))
 		got, ok := terminator.hooks[Order(777)]
-		require.True(t, ok)
-		require.Equal(t, 1, len(got))
+		assertTrue(t, ok)
+		assertEqual(t, 1, len(got))
 
-		require.Equal(t, time.Minute, got[0].timeout)
+		assertEqual(t, time.Minute, got[0].timeout)
 	})
 
 	t.Run("add_only_one_hook", func(t *testing.T) {
@@ -54,16 +53,16 @@ func TestTerminator_Register(t *testing.T) {
 		defer cancel()
 
 		terminator, ctx := NewWithSignals(rootCtx, syscall.SIGINT, syscall.SIGTERM)
-		require.NotNil(t, ctx)
+		assertNotNil(t, ctx)
 
 		terminator.WithOrder(1).
 			WithName("Hook").
 			Register(1*time.Second, func(_ context.Context) {})
 
-		require.Equal(t, 1, len(terminator.hooks))
+		assertEqual(t, 1, len(terminator.hooks))
 		got, ok := terminator.hooks[Order(1)]
-		require.True(t, ok)
-		require.Equal(t, 1, len(got))
+		assertTrue(t, ok)
+		assertEqual(t, 1, len(got))
 	})
 
 	t.Run("add_with_different_order", func(t *testing.T) {
@@ -71,7 +70,7 @@ func TestTerminator_Register(t *testing.T) {
 		defer cancel()
 
 		terminator, ctx := NewWithSignals(rootCtx, syscall.SIGINT, syscall.SIGTERM)
-		require.NotNil(t, ctx)
+		assertNotNil(t, ctx)
 
 		terminator.WithOrder(1).
 			WithName("Hook1").
@@ -80,14 +79,14 @@ func TestTerminator_Register(t *testing.T) {
 			WithName("Hook2").
 			Register(1*time.Second, func(_ context.Context) {})
 
-		require.Equal(t, 2, len(terminator.hooks))
+		assertEqual(t, 2, len(terminator.hooks))
 		got, ok := terminator.hooks[Order(1)]
-		require.True(t, ok)
-		require.Equal(t, 1, len(got))
+		assertTrue(t, ok)
+		assertEqual(t, 1, len(got))
 
 		got2, ok2 := terminator.hooks[Order(2)]
-		require.True(t, ok2)
-		require.Equal(t, 1, len(got2))
+		assertTrue(t, ok2)
+		assertEqual(t, 1, len(got2))
 	})
 
 	t.Run("add_with_the_same_order", func(t *testing.T) {
@@ -95,7 +94,7 @@ func TestTerminator_Register(t *testing.T) {
 		defer cancel()
 
 		terminator, ctx := NewWithSignals(rootCtx, syscall.SIGINT, syscall.SIGTERM)
-		require.NotNil(t, ctx)
+		assertNotNil(t, ctx)
 
 		terminator.WithOrder(1).
 			WithName("Hook1").
@@ -104,10 +103,10 @@ func TestTerminator_Register(t *testing.T) {
 			WithName("Hook2").
 			Register(1*time.Second, func(_ context.Context) {})
 
-		require.Equal(t, 1, len(terminator.hooks))
+		assertEqual(t, 1, len(terminator.hooks))
 		got, ok := terminator.hooks[Order(1)]
-		require.True(t, ok)
-		require.Equal(t, 2, len(got))
+		assertTrue(t, ok)
+		assertEqual(t, 2, len(got))
 	})
 
 	t.Run("panic_in_registered_hook", func(t *testing.T) {
@@ -115,7 +114,7 @@ func TestTerminator_Register(t *testing.T) {
 		defer cancel()
 
 		terminator, ctx := NewWithSignals(rootCtx, syscall.SIGINT, syscall.SIGTERM)
-		require.NotNil(t, ctx)
+		assertNotNil(t, ctx)
 
 		terminator.WithOrder(1).
 			WithName("Panicked Hook1").
@@ -123,11 +122,11 @@ func TestTerminator_Register(t *testing.T) {
 		terminator.WithOrder(2).
 			WithName("Panicked Hook2").
 			Register(1*time.Second, func(_ context.Context) { panic(errors.New("panic in Hook2")) })
-		require.Equal(t, 2, len(terminator.hooks))
+		assertEqual(t, 2, len(terminator.hooks))
 
 		cancel()
 		gotErr := terminator.Wait(ctx, time.Minute) // some long period of time
-		require.NoError(t, gotErr)
+		assertNoError(t, gotErr)
 	})
 }
 
@@ -137,7 +136,7 @@ func TestTerminator_waitShutdown(t *testing.T) {
 		defer cancel()
 
 		terminator, ctx := NewWithSignals(ctx, syscall.SIGINT, syscall.SIGTERM)
-		require.NotNil(t, ctx)
+		assertNotNil(t, ctx)
 
 		i := 0
 		terminator.WithOrder(1).WithName("Hook").Register(time.Second, func(_ context.Context) { i = 1 })
@@ -146,11 +145,11 @@ func TestTerminator_waitShutdown(t *testing.T) {
 		go terminator.waitShutdown(ctx)
 
 		runtime.Gosched()
-		require.Equal(t, 0, i)
+		assertEqual(t, 0, i)
 
 		cancel()
 		terminator.wg.Wait()
-		require.Equal(t, 1, i)
+		assertEqual(t, 1, i)
 	})
 
 	t.Run("hooks_are_executed_in_order", func(t *testing.T) {
@@ -158,7 +157,7 @@ func TestTerminator_waitShutdown(t *testing.T) {
 		defer cancel()
 
 		terminator, ctx := NewWithSignals(ctx, syscall.SIGINT, syscall.SIGTERM)
-		require.NotNil(t, ctx)
+		assertNotNil(t, ctx)
 
 		res := make([]int, 0, 4)
 		terminator.WithOrder(2).WithName("Hook1").Register(time.Second, func(_ context.Context) { res = append(res, 2) })
@@ -172,7 +171,7 @@ func TestTerminator_waitShutdown(t *testing.T) {
 		go terminator.waitShutdown(ctx)
 
 		terminator.wg.Wait()
-		require.Equal(t, []int{1, 2, 3, 4}, res)
+		assertEqual(t, []int{1, 2, 3, 4}, res)
 	})
 
 	t.Run("timeouted_hooks_are_ignored", func(t *testing.T) {
@@ -180,7 +179,7 @@ func TestTerminator_waitShutdown(t *testing.T) {
 		defer cancel()
 
 		terminator, ctx := NewWithSignals(ctx, syscall.SIGINT, syscall.SIGTERM)
-		require.NotNil(t, ctx)
+		assertNotNil(t, ctx)
 
 		t1Mx := sync.Mutex{}
 		t1 := 0
@@ -209,8 +208,8 @@ func TestTerminator_waitShutdown(t *testing.T) {
 		terminator.wg.Wait()
 
 		t1Mx.Lock()
-		require.Equal(t, 0, t1)
-		require.Equal(t, 1, t2) // checking before Unlock to be sure that 2nd hook won't be just executed after unlocking
+		assertEqual(t, 0, t1)
+		assertEqual(t, 1, t2) // checking before Unlock to be sure that 2nd hook won't be just executed after unlocking
 		t1Mx.Unlock()
 
 		goLeakWg.Wait()
@@ -244,7 +243,7 @@ func TestTerminator_Wait(t *testing.T) {
 			defer cancel()
 
 			terminator, ctx := NewWithSignals(rootCtx, syscall.SIGINT, syscall.SIGTERM)
-			require.NotNil(t, ctx)
+			assertNotNil(t, ctx)
 
 			terminator.wg.Add(1)
 
@@ -269,9 +268,9 @@ func TestTerminator_Wait(t *testing.T) {
 			}
 
 			if tt.wantErr {
-				require.Error(t, waitErr)
+				assertError(t, waitErr)
 			} else {
-				require.NoError(t, waitErr)
+				assertNoError(t, waitErr)
 			}
 		})
 	}
@@ -288,12 +287,12 @@ func Test_withSignals(t *testing.T) {
 
 		gotCtx, gotCancelFunc := withSignals(rootCtx, chSignals, sig)
 		err := syscall.Kill(syscall.Getpid(), sig)
-		require.NoError(t, err)
+		assertNoError(t, err)
 
-		require.NotNil(t, gotCtx)
-		require.NotNil(t, gotCancelFunc)
+		assertNotNil(t, gotCtx)
+		assertNotNil(t, gotCancelFunc)
 
-		require.NoError(t, gotCtx.Err())
+		assertNoError(t, gotCtx.Err())
 	})
 }
 
@@ -335,11 +334,11 @@ func TestTerminator_SetLogger(t *testing.T) {
 			defer cancel()
 
 			got, ctx := NewWithSignals(rootCtx, os.Interrupt)
-			require.NotNil(t, got)
-			require.NotNil(t, ctx)
+			assertNotNil(t, got)
+			assertNotNil(t, ctx)
 
 			got.SetLogger(tt.args.log)
-			require.Equal(t, tt.wantLog, got.log)
+			assertEqual(t, tt.wantLog, got.log)
 		})
 	}
 }

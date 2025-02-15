@@ -1,7 +1,6 @@
 package graterm
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
 )
 
@@ -55,7 +54,7 @@ func Test_Hook_String(t *testing.T) {
 			t.Parallel()
 
 			got := tt.fields.hook.String()
-			require.Equal(t, tt.want, got)
+			assertEqual(t, tt.want, got)
 		})
 	}
 }
