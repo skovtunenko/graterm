@@ -333,3 +333,28 @@ func TestTerminator_SetLogger(t *testing.T) {
 		})
 	}
 }
+
+func TestTerminator_ConcurrentHookRegistration(t *testing.T) {
+	t.Parallel()
+
+	rootCtx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	terminator, _ := NewWithSignals(rootCtx, syscall.SIGINT)
+
+	const numHooks = 100
+
+	var wg sync.WaitGroup
+	for i := 0; i < numHooks; i++ {
+		wg.Add(1)
+
+		go func(order Order) {
+			defer wg.Done()
+
+			terminator.WithOrder(order).Register(time.Second, func(ctx context.Context) {})
+		}(Order(i))
+	}
+
+	wg.Wait()
+	assertEqual(t, numHooks, len(terminator.hooks))
+}
