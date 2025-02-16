@@ -1,97 +1,31 @@
 /*
-Package graterm provides capabilities to create a [Terminator] instance, register ordered termination Hooks,
-and block application execution until one of the registered [os.Signal] events occurs.
+Package graterm provides a structured API for managing graceful application shutdown in response to specific [os.Signal] events.
+It ensures a controlled and predictable shutdown process by allowing the registration of ordered termination hooks.
 
-Termination hooks registered with the same [Order] will be executed concurrently.
+# Purpose
 
-It is possible to set individual timeouts for each registered termination hook and global termination timeout for the whole application.
+The graterm package simplifies application shutdown handling by introducing a centralized shutdown manager, the [Terminator].
+It listens for specified [os.Signal] events and orchestrates the orderly execution of termination hooks.
+Hooks allow resources to be properly cleaned up before the application exits.
 
-Optionally a Hook may have a name (using Hook.WithName). It might be handy only if the Logger injected into Terminator instance to
-log internal termination lifecycle events.
+# Key Concepts
 
-# Examples
+  - [Terminator]: A singleton shutdown manager responsible for capturing OS termination signals and executing registered hooks.
+  - [Hook]: A termination callback function that performs cleanup tasks during shutdown.
+  - [Order]: A numeric priority assigned to each hook, dictating execution order. Hooks with the same [Order] execute concurrently, while hooks with a lower [Order] value complete before those with a higher [Order] value.
 
-Example code for generic application components:
+# Features
 
-	func main() {
-		// Define termination Orders:
-		const (
-			HTTPServerTerminationOrder graterm.Order = 1
-			DBTerminationOrder         graterm.Order = 2
-		)
+  - Enforced Hook Registration: Hooks must only be registered via [Terminator] methods, ensuring proper ordering and execution.
+  - Ordered Execution: Hooks execute sequentially based on their assigned [Order]; those with the same priority run concurrently.
+  - Configurable Timeouts: Each Hook may have an individual timeout, and a global shutdown timeout can be set to enforce an upper limit on the termination process.
+  - Optional Logging: the library does not depend on a specific logging framework.
+  - Traceability: Hooks can be assigned a name for logging purposes when a [Logger] is attached to the [Terminator].
+  - Panic Safety: Panics inside hooks are caught, logged, and do not disrupt the overall shutdown sequence.
 
-		// create new Terminator instance:
-		terminator, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-		terminator.SetLogger(log.Default()) // Optional step
+# Additional Considerations
 
-		// Register HTTP Server termination hook:
-		terminator.WithOrder(HTTPServerTerminationOrder).
-			WithName("HTTP Server"). // setting a Name is optional and will be useful only if logger instance provided
-			Register(1*time.Second, func(ctx context.Context) {
-				log.Println("terminating HTTP Server...")
-				defer log.Println("...HTTP Server terminated")
-			})
-
-		// Register nameless DB termination hook:
-		terminator.WithOrder(DBTerminationOrder).
-			Register(1*time.Second, func(ctx context.Context) {
-				log.Println("terminating Database...")
-				defer log.Println("...Database terminated")
-
-				const sleepTime = 3 * time.Second
-				select {
-				case <-time.After(sleepTime):
-					log.Printf("Database termination sleep time %v is over\n", sleepTime)
-				case <-ctx.Done():
-					log.Printf("Database termination Context is Done because of: %+v\n", ctx.Err())
-				}
-			})
-
-		// Wait for os.Signal to occur, then terminate application with maximum timeout of 20 seconds:
-		if err := terminator.Wait(appCtx, 20 * time.Second); err != nil {
-			log.Printf("graceful termination period was timed out: %+v", err)
-		}
-	}
-
-Example code for HTTP server integration:
-
-	func main() {
-		// Define Order for HTTP Server termination:
-		const HTTPServerTerminationOrder graterm.Order = 1
-
-		// create new Terminator instance:
-		terminator, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-		terminator.SetLogger(log.Default()) // Optional step
-
-		// Create an HTTP Server and add one simple handler into it:
-		httpServer := &http.Server{
-			Addr:              ":8080",
-			Handler:           http.DefaultServeMux,
-		}
-		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-			fmt.Fprintf(w, "hello, world!")
-		})
-
-		// Start HTTP server in a separate goroutine:
-		go func() {
-			if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-				log.Printf("terminated HTTP Server: %+v\n", err)
-			}
-		}()
-
-		// Register HTTP Server termination hook:
-		terminator.WithOrder(HTTPServerTerminationOrder).
-			WithName("HTTPServer"). // setting a Name is optional and will be useful only if logger instance provided
-			Register(10*time.Second, func(ctx context.Context) {
-				if err := httpServer.Shutdown(ctx); err != nil {
-					log.Printf("shutdown HTTP Server: %+v\n", err)
-				}
-			})
-
-		// Wait for os.Signal to occur, then terminate application with maximum timeout of 30 seconds:
-		if err := terminator.Wait(appCtx, 30 * time.Second); err != nil {
-			log.Printf("graceful termination period is timed out: %+v\n", err)
-		}
-	}
+  - Concurrent execution of hooks with the same [Order] requires careful management of shared resources to avoid race conditions.
+  - Incorrect timeout configurations may cause delays in shutdown; ensure timeouts are set to appropriate values.
 */
 package graterm
