@@ -68,7 +68,7 @@ func (t *Terminator) WithOrder(order Order) *Hook {
 }
 
 // Wait waits (with timeout) for Terminator to finish termination after the appCtx is done.
-func (t *Terminator) Wait(appCtx context.Context, timeout time.Duration) error {
+func (t *Terminator) Wait(appCtx context.Context, shutdownTimeout time.Duration) error {
 	{
 		t.wg.Add(1)
 		go t.waitShutdown(appCtx)
@@ -83,8 +83,8 @@ func (t *Terminator) Wait(appCtx context.Context, timeout time.Duration) error {
 	}()
 
 	select {
-	case <-time.After(timeout):
-		return fmt.Errorf("termination timed out after %v", timeout)
+	case <-time.After(shutdownTimeout):
+		return fmt.Errorf("termination timed out after %v", shutdownTimeout)
 	case <-wgChan:
 		return nil
 	}
