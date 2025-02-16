@@ -105,7 +105,7 @@ func (t *Terminator) Wait(appCtx context.Context, shutdownTimeout time.Duration)
 	}
 }
 
-// waitShutdown waits for the context to be done and then sequentially notifies existing shutdown hooks.
+// waitShutdown waits for the context to be canceled and then executes the registered shutdown hooks sequentially.
 func (t *Terminator) waitShutdown(appCtx context.Context) {
 	defer t.wg.Done()
 
@@ -119,6 +119,7 @@ func (t *Terminator) waitShutdown(appCtx context.Context) {
 	}
 }
 
+// getSortedOrders returns a slice of hook orders sorted in ascending order.
 func (t *Terminator) getSortedOrders() []Order {
 	orders := make([]Order, 0, len(t.hooks))
 	for order := range t.hooks {
@@ -130,6 +131,7 @@ func (t *Terminator) getSortedOrders() []Order {
 	return orders
 }
 
+// processOrder executes all hooks associated with the given order concurrently and waits for all to finish.
 func (t *Terminator) processOrder(order Order) {
 	var wg sync.WaitGroup
 	for _, hook := range t.hooks[order] {
@@ -144,6 +146,7 @@ func (t *Terminator) processOrder(order Order) {
 	wg.Wait()
 }
 
+// executeHook runs a single hook with a timeout, recovers from panics, and logs the outcome.
 func (t *Terminator) executeHook(hook Hook) {
 	ctx, cancel := context.WithTimeout(context.Background(), hook.timeout)
 	defer cancel()
