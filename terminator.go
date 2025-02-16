@@ -114,54 +114,64 @@ func (t *Terminator) waitShutdown(appCtx context.Context) {
 	t.hooksMx.Lock()
 	defer t.hooksMx.Unlock()
 
-	order := make([]int, 0, len(t.hooks))
-	for k := range t.hooks {
-		order = append(order, int(k))
+	for _, order := range t.getSortedOrders() {
+		t.processOrder(order)
 	}
-	sort.Ints(order)
+}
 
-	for _, o := range order {
-		o := o
+func (t *Terminator) getSortedOrders() []Order {
+	orders := make([]Order, 0, len(t.hooks))
+	for order := range t.hooks {
+		orders = append(orders, order)
+	}
+	sort.Slice(orders, func(i, j int) bool {
+		return orders[i] < orders[j]
+	})
+	return orders
+}
 
-		runWg := sync.WaitGroup{}
+func (t *Terminator) processOrder(order Order) {
+	var wg sync.WaitGroup
+	for _, hook := range t.hooks[order] {
+		wg.Add(1)
 
-		for _, c := range t.hooks[Order(o)] {
-			runWg.Add(1)
+		go func(h Hook) {
+			defer wg.Done()
 
-			go func(f Hook) {
-				defer runWg.Done()
+			t.executeHook(h)
+		}(hook)
+	}
+	wg.Wait()
+}
 
-				ctx, cancel := context.WithTimeout(context.Background(), f.timeout)
-				defer cancel()
+func (t *Terminator) executeHook(hook Hook) {
+	ctx, cancel := context.WithTimeout(context.Background(), hook.timeout)
+	defer cancel()
 
-				var execDuration time.Duration
+	var duration time.Duration
 
-				go func() {
-					currentTime := time.Now()
+	start := time.Now()
 
-					defer func() {
-						defer cancel()
+	go func() {
+		defer func() {
+			defer cancel()
 
-						execDuration = time.Since(currentTime)
-						if err := recover(); err != nil {
-							t.log.Printf("registered hook panicked after %v for %v, recovered: %+v", execDuration, &f, err)
-						}
-					}()
+			duration = time.Since(start)
 
-					f.hookFunc(ctx)
-				}()
+			if r := recover(); r != nil {
+				t.log.Printf("registered hook panicked after %v for %v, recovered: %+v", duration, &hook, r)
+			}
+		}()
 
-				<-ctx.Done() // block until the hookFunc is over OR timeout has been expired
+		hook.hookFunc(ctx)
+	}()
 
-				switch err := ctx.Err(); {
-				case errors.Is(err, context.DeadlineExceeded):
-					t.log.Printf("registered hook timed out after %v for %v", f.timeout, &f)
-				case errors.Is(err, context.Canceled):
-					t.log.Printf("registered hook finished termination in %v (out of maximum %v) for %v", execDuration, f.timeout, &f)
-				}
-			}(c)
-		}
+	<-ctx.Done() // block until the hookFunc is over OR timeout has been expired
 
-		runWg.Wait()
+	switch err := ctx.Err(); {
+	case errors.Is(err, context.DeadlineExceeded):
+		t.log.Printf("registered hook timed out after %v for %v", hook.timeout, &hook)
+	case errors.Is(err, context.Canceled):
+		t.log.Printf("registered hook finished termination in %v (out of maximum %v) for %v", duration, hook.timeout, &hook)
 	}
 }
