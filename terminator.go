@@ -67,7 +67,22 @@ func (t *Terminator) WithOrder(order Order) *Hook {
 	}
 }
 
-// Wait waits (with timeout) for Terminator to finish termination after the appCtx is done.
+// Wait blocks execution until the provided appCtx is canceled and then executes all registered termination hooks.
+//
+// This function initiates the shutdown sequence when appCtx is done, typically due to receiving an [os.Signal] events.
+// After appCtx is canceled, it waits for all registered hooks to complete execution within the specified shutdownTimeout.
+//
+// Hooks are executed in order of priority (lower order values execute first). Hooks with the same order run concurrently.
+// If the shutdownTimeout expires before all hooks complete, the function returns an error.
+//
+// This is a blocking call that should be placed at the end of the application's lifecycle to ensure a proper shutdown.
+//
+// Parameters:
+//   - appCtx: The application context that, when canceled, triggers the termination process.
+//   - shutdownTimeout: The maximum time allowed for all hooks to complete execution.
+//
+// Returns:
+//   - error: If termination exceeds the shutdownTimeout, an error is returned indicating a timeout.
 func (t *Terminator) Wait(appCtx context.Context, shutdownTimeout time.Duration) error {
 	{
 		t.wg.Add(1)
