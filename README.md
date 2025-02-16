@@ -51,7 +51,8 @@ that will be cancelled when one of the registered `os.Signal`s will occur:
 ```go
 // create new Terminator instance:
 terminator, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-terminator.SetLogger(log.Default()) // Optionally set the custom logger implementation instead of default NOOP one
+// Optionally set the custom logger implementation instead of default NOOP one:
+terminator.SetLogger(log.Default()) 
 ```
 
 Optionally define [Order](https://pkg.go.dev/github.com/skovtunenko/graterm#Order) of components to be terminated at the end:
@@ -80,7 +81,7 @@ terminator.WithOrder(HTTPServerTerminationOrder).
 Block main goroutine until the application receives one of the registered `os.Signal`s:
 
 ```go
-if err := terminator.Wait(appCtx, 20*time.Second); err != nil {
+if err := terminator.Wait(appCtx, 20 * time.Second); err != nil {
     log.Printf("graceful termination period was timed out: %+v", err)
 }
 ```
