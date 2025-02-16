@@ -32,11 +32,13 @@ and global termination timeout for the whole application.
 # ⚙️ Usage
 
 Get the library:
+
 ```bash
 go get -u github.com/skovtunenko/graterm
 ```
 
 Import the library into the project:
+
 ```go
 import (
     "github.com/skovtunenko/graterm"
@@ -45,6 +47,7 @@ import (
 
 Create a new instance of [Terminator](https://pkg.go.dev/github.com/skovtunenko/graterm#Terminator) and get an application context 
 that will be cancelled when one of the registered `os.Signal`s will occur:
+
 ```go
 // create new Terminator instance:
 terminator, appCtx := graterm.NewWithSignals(context.Background(), syscall.SIGINT, syscall.SIGTERM)
@@ -52,6 +55,7 @@ terminator.SetLogger(log.Default()) // Optionally set the custom logger implemen
 ```
 
 Optionally define [Order](https://pkg.go.dev/github.com/skovtunenko/graterm#Order) of components to be terminated at the end:
+
 ```go
 const (
     HTTPServerTerminationOrder graterm.Order = 1
@@ -62,6 +66,7 @@ const (
 ```
 
 Register some termination [Hooks](https://pkg.go.dev/github.com/skovtunenko/graterm#Hook) with priorities:
+
 ```go
 terminator.WithOrder(HTTPServerTerminationOrder).
     WithName("HTTP Server"). // setting a Name is optional and will be useful only if logger instance provided
@@ -73,6 +78,7 @@ terminator.WithOrder(HTTPServerTerminationOrder).
 ```
 
 Block main goroutine until the application receives one of the registered `os.Signal`s:
+
 ```go
 if err := terminator.Wait(appCtx, 20*time.Second); err != nil {
     log.Printf("graceful termination period was timed out: %+v", err)
@@ -213,18 +219,22 @@ The full-fledged example located here: [example.go](https://github.com/skovtunen
 
 📖 Testing
 -----------
+
 Unit-tests with code coverage:
+
 ```bash
 make test
 ```
 
 Run linter:
+
 ```bash
 make code-quality
 ```
 
 ⚠️ LICENSE
 -----------
+
 [MIT](https://github.com/skovtunenko/graterm/blob/main/LICENSE)
 
 🕶️ AUTHORS

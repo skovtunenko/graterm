@@ -6,7 +6,7 @@ import (
 )
 
 // assertNotNil fails if the actual value is nil.
-func assertNotNil(t *testing.T, actual interface{}) {
+func assertNotNil(t *testing.T, actual any) {
 	t.Helper()
 	if actual == nil {
 		t.Fatal("expected non-nil value")
@@ -14,7 +14,7 @@ func assertNotNil(t *testing.T, actual interface{}) {
 }
 
 // assertEqual fails if expected and actual are not equal.
-func assertEqual(t *testing.T, expected, actual interface{}) {
+func assertEqual(t *testing.T, expected, actual any) {
 	t.Helper()
 	if !reflect.DeepEqual(expected, actual) {
 		t.Fatalf("expected %v, got %v", expected, actual)

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"log"
 	"os"
-	"os/signal"
 	"runtime"
 	"sync"
 	"syscall"
@@ -286,26 +285,6 @@ func TestTerminator_Wait(t *testing.T) {
 			}
 		})
 	}
-}
-
-func Test_withSignals(t *testing.T) {
-	t.Run("termination_on_SIGHUP", func(t *testing.T) {
-		rootCtx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-
-		chSignals := make(chan os.Signal, 1)
-		sig := syscall.SIGHUP
-		defer signal.Stop(chSignals)
-
-		gotCtx, gotCancelFunc := withSignals(rootCtx, chSignals, sig)
-		err := syscall.Kill(syscall.Getpid(), sig)
-		assertNoError(t, err)
-
-		assertNotNil(t, gotCtx)
-		assertNotNil(t, gotCancelFunc)
-
-		assertNoError(t, gotCtx.Err())
-	})
 }
 
 func TestTerminator_SetLogger(t *testing.T) {

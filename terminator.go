@@ -32,8 +32,7 @@ type Terminator struct {
 //
 // Note: this method will start internal monitoring goroutine.
 func NewWithSignals(appCtx context.Context, sig ...os.Signal) (*Terminator, context.Context) {
-	chSignals := make(chan os.Signal, 1)
-	ctx, cancel := withSignals(appCtx, chSignals, sig...)
+	ctx, cancel := signal.NotifyContext(appCtx, sig...)
 	return &Terminator{
 		hooksMx:    &sync.Mutex{},
 		hooks:      make(map[Order][]Hook),
@@ -41,29 +40,6 @@ func NewWithSignals(appCtx context.Context, sig ...os.Signal) (*Terminator, cont
 		cancelFunc: cancel,
 		log:        noopLogger{},
 	}, ctx
-}
-
-// withSignals return a copy of the parent context that will be canceled by signal(s).
-// If no signals are provided, any incoming signal will cause cancel.
-// Otherwise, just the provided signals will.
-//
-// Note: this method will start internal monitoring goroutine.
-func withSignals(ctx context.Context, chSignals chan os.Signal, sig ...os.Signal) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(ctx)
-
-	signal.Notify(chSignals, sig...)
-
-	// function invoke cancel once a signal arrived OR parent context is done:
-	go func() {
-		defer cancel()
-
-		select {
-		case <-chSignals:
-		case <-ctx.Done():
-		}
-	}()
-
-	return ctx, cancel
 }
 
 // SetLogger sets the Logger implementation.

@@ -12,7 +12,7 @@ import (
 	"github.com/skovtunenko/graterm"
 )
 
-// Instructions:
+// Instructions to test this sample application:
 // - run the application, reach out to http://localhost:8080/
 // - terminate the application (CTRL+C)
 // - investigate the log output

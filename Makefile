@@ -1,4 +1,3 @@
-export GO111MODULE=on
 
 PROJECT_PATH=$(shell dirname $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST)))))
 
