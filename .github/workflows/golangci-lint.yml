@@ -8,19 +8,19 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                go-version: [ '1.20', '1.21', '1.22', '1.23', '1.24' ]
+                go-version: [ '1.24' ]
         name: lint
         runs-on: ubuntu-latest
         steps:
-            -   uses: actions/checkout@v4
-            -   uses: actions/setup-go@v5
+            -   name: Install Go
+                uses: actions/setup-go@v5
                 with:
                     go-version: ${{ matrix.go-version }}
                     cache: true
-            -   name: Vendoring Go dependencies
-                run: go mod vendor
-            -   name: golangci-lint
-                uses: golangci/golangci-lint-action@v4
+            -   name: Checkout code
+                uses: actions/checkout@v4
+            -   name: Linting
+                uses: golangci/golangci-lint-action@v6
                 with:
                     version: v1.64.5
                     args: --timeout=5m

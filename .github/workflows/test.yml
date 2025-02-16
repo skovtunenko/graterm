@@ -11,12 +11,13 @@ jobs:
         name: test
         runs-on: ubuntu-latest
         steps:
-            -   name: checkout
+            -   name: Checkout code
                 uses: actions/checkout@v4
-            -   uses: actions/setup-go@v5
+            -   name: Install Go
+                uses: actions/setup-go@v5
                 with:
                     go-version: ${{ matrix.go-version }}
-            -   name: Print go version
+            -   name: Print Go version
                 run: go version
             -   name: Run tests
                 run: go test -json ./... > test.json
