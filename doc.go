@@ -48,7 +48,7 @@ Example code for generic application components:
 			})
 
 		// Wait for os.Signal to occur, then terminate application with maximum timeout of 20 seconds:
-		if err := terminator.Wait(appCtx, 20*time.Second); err != nil {
+		if err := terminator.Wait(appCtx, 20 * time.Second); err != nil {
 			log.Printf("graceful termination period was timed out: %+v", err)
 		}
 	}
@@ -89,7 +89,7 @@ Example code for HTTP server integration:
 			})
 
 		// Wait for os.Signal to occur, then terminate application with maximum timeout of 30 seconds:
-		if err := terminator.Wait(appCtx, 30*time.Second); err != nil {
+		if err := terminator.Wait(appCtx, 30 * time.Second); err != nil {
 			log.Printf("graceful termination period is timed out: %+v\n", err)
 		}
 	}
