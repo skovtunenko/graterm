@@ -69,21 +69,19 @@ func (t *Terminator) WithOrder(order Order) *Hook {
 
 // Wait blocks execution until the provided appCtx is canceled and then executes all registered termination hooks.
 //
-// This function initiates the shutdown sequence when appCtx is done, typically due to receiving an [os.Signal] events.
-// After appCtx is canceled, it waits for all registered hooks to complete execution within the specified shutdownTimeout.
-//
-// Hooks are executed in order of priority (lower order values execute first). Hooks with the same order run concurrently.
-// If the shutdownTimeout expires before all hooks complete, the function returns an error.
-//
-// This is a blocking call that should be placed at the end of the application's lifecycle to ensure a proper shutdown.
+// This is a blocking function that first waits indefinitely for appCtx to be canceled (typically by an [os.Signal] events),
+// and then executes all registered termination hooks with a maximum total time limit.
 //
 // Parameters:
-//   - appCtx: The application context that, when canceled, triggers the termination process.
-//   - shutdownTimeout: The maximum time allowed for all hooks to complete execution.
+//   - appCtx: The application context that triggers termination when canceled
+//   - terminationTimeout: The maximum duration allowed for all termination hooks to complete
+//     after appCtx is canceled. This timeout only starts counting after the termination signal
+//     is received and does not affect the initial waiting period.
 //
-// Returns:
-//   - error: If termination exceeds the shutdownTimeout, an error is returned indicating a timeout.
-func (t *Terminator) Wait(appCtx context.Context, shutdownTimeout time.Duration) error {
+// Returns an error if the hooks do not complete within the terminationTimeout period.
+// A timeout error does not mean the application is in a bad state - hooks may still be running
+// their cleanup work in the background.
+func (t *Terminator) Wait(appCtx context.Context, terminationTimeout time.Duration) error {
 	{
 		t.wg.Add(1)
 		go t.waitShutdown(appCtx)
@@ -98,8 +96,8 @@ func (t *Terminator) Wait(appCtx context.Context, shutdownTimeout time.Duration)
 	}()
 
 	select {
-	case <-time.After(shutdownTimeout):
-		return fmt.Errorf("termination timed out after %v", shutdownTimeout)
+	case <-time.After(terminationTimeout):
+		return fmt.Errorf("termination timed out after %v", terminationTimeout)
 	case <-wgChan:
 		return nil
 	}
