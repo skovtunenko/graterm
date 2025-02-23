@@ -185,7 +185,7 @@ func TestTerminator_waitShutdown(t *testing.T) {
 		assertEqual(t, []int{1, 2, 3, 4}, res)
 	})
 
-	t.Run("timeouted_hooks_are_ignored", func(t *testing.T) {
+	t.Run("timed_out_hooks_are_ignored", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
