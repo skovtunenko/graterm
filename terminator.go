@@ -115,7 +115,7 @@ func (t *Terminator) waitShutdown(appCtx context.Context) {
 	defer t.hooksMx.Unlock()
 
 	for _, order := range t.getSortedOrders() {
-		t.processOrder(order)
+		t.executeHooksWithOrder(order)
 	}
 }
 
@@ -131,8 +131,8 @@ func (t *Terminator) getSortedOrders() []Order {
 	return orders
 }
 
-// processOrder executes all hooks associated with the given order concurrently and waits for all to finish.
-func (t *Terminator) processOrder(order Order) {
+// executeHooksWithOrder executes all hooks associated with the given order concurrently and waits for all to finish.
+func (t *Terminator) executeHooksWithOrder(order Order) {
 	var wg sync.WaitGroup
 	for _, hook := range t.hooks[order] {
 		wg.Add(1)
