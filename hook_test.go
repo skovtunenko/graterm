@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func Test_Hook_String(t *testing.T) {
+func TestHook_String(t *testing.T) {
 	t.Parallel()
 
 	type fields struct {
